@@ -3,12 +3,11 @@ using UnityEngine.PlayerLoop;
 
 public class Tile : MonoBehaviour
 {
-    public int RowNum { get; private set; }
-    public int ColumnNum{ get; private set; }
+    public Vector2Int Coordinate { get; private set; }
+    public BlockData BlockData { get; private set; }
 
-    public void Init(int rowNum, int columnNum)
+    public void Init(int rowNum, int columnNum, BlockData blockData = null)
     {
-        RowNum = rowNum;
-        ColumnNum = columnNum;
+        Coordinate = new Vector2Int(rowNum, columnNum);
     }
 }

@@ -1,4 +1,5 @@
 
+using System;
 using UnityEngine;
 
 public class GridManager : MonoBehaviour
@@ -41,6 +42,8 @@ public class GridManager : MonoBehaviour
         // Calculate starting position to center the grid
         Vector3 startPosition = new Vector3(-((columns - 1) * (cellSize + spacing)) / 2, 
             ((rows - 1) * (cellSize + spacing)) / 2, 0);
+
+        Array[,] boardData = new Array[rows, columns];
 
         // Instantiate grid cells with spacing
         for (int i = 0; i < rows; i++)

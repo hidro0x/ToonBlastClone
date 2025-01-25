@@ -1,4 +1,33 @@
+using System;
 using UnityEngine;
+
+[Serializable]
+public class BlockData
+{
+    public BlockType BlockType { get; private set; }
+    public BlockColor BlockColor{ get; private set; }
+    public BlockData(BlockColor blockColor, BlockType blockType)
+    {
+        BlockColor = blockColor;
+        BlockType = blockType;
+    }
+}
+
+[Serializable]
+public struct BlockSprite
+{
+    [field:SerializeField]public BlockColor Color{ get; private set; }
+    [field:SerializeField]public Sprite Sprite { get; private set; }
+
+    public BlockSprite(BlockColor color)
+    {
+        Color = color;
+        Sprite = null;
+    }
+}
+
+
+[Serializable]
 public enum BlockColor
 {
     Red = 0,
@@ -9,10 +38,10 @@ public enum BlockColor
     Pink = 5,
 
 }
-
+[Serializable]
 public enum BlockType
 {
-    Special = 0,
+    Default = 0,
     Bomb = 1,
     Rocket = 2,
     Portal = 3,
