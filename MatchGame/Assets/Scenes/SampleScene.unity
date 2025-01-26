@@ -370,11 +370,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6b35627c5b8bf64793816a5e510525a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cellPrefab: {fileID: 8021059826405204601, guid: cbede9dedd4fe984485c54e0d28fe885, type: 3}
   rows: 10
   columns: 9
-  spacing: 0.02
-  margin: 0.2
+  spacing: -0.09
+  margin: 0.01
 --- !u!4 &1453748643
 Transform:
   m_ObjectHideFlags: 0

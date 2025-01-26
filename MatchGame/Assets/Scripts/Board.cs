@@ -2,7 +2,7 @@
 using System;
 using UnityEngine;
 
-public class BoardManager : MonoBehaviour
+public class Board : MonoBehaviour
 {
     [Tooltip("Rows amount of the table")]
     [SerializeField] int rows = 5;
@@ -13,7 +13,9 @@ public class BoardManager : MonoBehaviour
     [Tooltip("The margin of the table to be formed from the right and left axis")]
     [SerializeField] float margin = 0.1f;
 
-    [Space] [Header("Blocks")] [SerializeField]private Tile[] _boardData;
+    private Tile[] _boardData;
+    public ObjectPool<BlockData> BlockPool { get; private set; }
+
 
     private Camera _mainCamera;
 
@@ -25,8 +27,9 @@ public class BoardManager : MonoBehaviour
 
     void CreateBoard()
     {
-        var tempObject = new GameObject().AddComponent<Tile>();
+        var tempTileObject = new GameObject().AddComponent<Tile>();
         _boardData = new Tile[rows*columns];
+        
         // Get the camera bounds
         float height = 2f * _mainCamera.orthographicSize;
         float width = height * _mainCamera.aspect;
@@ -40,7 +43,12 @@ public class BoardManager : MonoBehaviour
 
         // Adjust the scale of the cells
         Vector3 cellScale = new Vector3(cellSize, cellSize, 1);
-        tempObject.transform.localScale = cellScale;
+        tempTileObject.transform.localScale = cellScale;
+        
+        var tempBlockSpriteObject = new GameObject().AddComponent<BlockData>();
+        tempBlockSpriteObject.gameObject.AddComponent<SpriteRenderer>();
+        tempBlockSpriteObject.transform.localScale = cellScale;
+        BlockPool = new ObjectPool<BlockData>(tempBlockSpriteObject, rows * columns, transform);
 
         // Calculate starting position to center the grid
         Vector3 startPosition = new Vector3(-((columns - 1) * (cellSize + spacing)) / 2, 
@@ -55,8 +63,8 @@ public class BoardManager : MonoBehaviour
             {
                 Vector3 position = startPosition + new Vector3(j * (cellSize + spacing), 
                     -i * (cellSize + spacing), 0);
-                tempObject.Init(i,j);
-                _boardData[index] = Instantiate(tempObject, position, Quaternion.identity, transform);
+                _boardData[index] = Instantiate(tempTileObject, position, Quaternion.identity, transform);
+                _boardData[index].Init(i,j, BlockManager.Instance.GetRandomBlock());
                 index++;
             }
         }

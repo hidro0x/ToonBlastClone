@@ -2,16 +2,27 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class BlockData
+public class BlockData : MonoBehaviour
 {
     public BlockType BlockType { get; private set; }
     public BlockColor BlockColor{ get; private set; }
     
-    public BlockData(BlockColor blockColor, BlockType blockType)
+    private SpriteRenderer _spriteRenderer;
+    private void Awake()
     {
-        BlockColor = blockColor;
-        BlockType = blockType;
+        _spriteRenderer = GetComponent<SpriteRenderer>();
     }
+    
+    public void ChangeBlock(BlockType type, BlockColor color)
+    {
+        BlockColor = color;
+        BlockType = type;
+        _spriteRenderer.sprite = BlockManager.Instance.GetBlockSprite(this);
+    }
+    
+
+    public void SetSpriteOrder(int row) => _spriteRenderer.sortingOrder = -row;
+
 }
 
 [Serializable]
