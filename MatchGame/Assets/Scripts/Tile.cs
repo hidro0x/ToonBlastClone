@@ -3,12 +3,14 @@ using UnityEngine.PlayerLoop;
 
 public class Tile : MonoBehaviour
 {
-    public Vector2Int Coordinate { get; private set; }
+    private Vector2Int _coordinate;
     public BlockData Data { get; private set; }
+    public int Row => _coordinate.x;
+    public int Column => _coordinate.y;
    
     public void Init(int rowNum, int columnNum, BlockData blockData = null)
     {
-        Coordinate = new Vector2Int(rowNum, columnNum);
+        _coordinate = new Vector2Int(rowNum, columnNum);
         AssignBlock(blockData);
     }
 
@@ -18,7 +20,14 @@ public class Tile : MonoBehaviour
         {
             Data = data;
             data.gameObject.transform.position = transform.position;
-            data.SetSpriteOrder(Coordinate.x);
+            data.SetSpriteOrder(Row);
         }
+    }
+    
+    public void RemoveBlock()
+    {
+        BlockManager.Instance.RemoveBlock(Data);
+        Data = null;
+        
     }
 }

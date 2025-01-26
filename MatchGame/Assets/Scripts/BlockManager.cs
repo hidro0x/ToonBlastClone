@@ -15,6 +15,8 @@ public class BlockManager : SerializedMonoBehaviour
         _board = GetComponent<Board>();
         Instance = this;
     }
+    
+    
 
     [SerializeField] private Dictionary<BlockType, BlockSprite[]> blockSprites = new Dictionary<BlockType, BlockSprite[]>()
     {
@@ -35,8 +37,12 @@ public class BlockManager : SerializedMonoBehaviour
         return block;
     }
 
-    public void MoveBlock(BlockData blockData, Vector2Int tile)
+    public void RemoveBlock(BlockData data)
     {
-        
+        if (data != null)
+        {
+            _board.BlockPool.Return(data);
+        }
     }
+    
 }
