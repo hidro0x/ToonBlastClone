@@ -8,6 +8,7 @@ public class BlockData : MonoBehaviour
     public BlockColor BlockColor{ get; private set; }
     
     private SpriteRenderer _spriteRenderer;
+
     private void Awake()
     {
         _spriteRenderer = GetComponent<SpriteRenderer>();

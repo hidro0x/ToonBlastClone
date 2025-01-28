@@ -13,7 +13,7 @@ public class Board : MonoBehaviour
     [Tooltip("The margin of the table to be formed from the right and left axis")]
     [SerializeField] float margin = 0.1f;
 
-    private Tile[,] _boardData;
+    public Tile[,] BoardData { get; private set; }
     private Camera _camera;
     public ObjectPool<BlockData> BlockPool { get; private set; }
     
@@ -45,9 +45,68 @@ public class Board : MonoBehaviour
 
             foreach (var element in matchedTiles)
             {
-                BlockManager.Instance.RemoveBlock(element.Data);
+                element.RemoveBlock();
+            }
+            
+            CheckRows(matchedTiles);
+        }
+        
+    }
+
+    private void CheckRows(List<Tile> tiles)
+    {
+        var fillingColumns = new List<int>();
+        foreach (var tile in tiles)
+        {
+            if(fillingColumns.Contains(tile.Column)) continue;
+            fillingColumns.Add(tile.Column);
+        }
+
+        FillColumns(fillingColumns);
+    }
+
+    private void OrderColumn(int columnNum)
+    {
+        for ( int row = rowsLength - 1; row >= 0; row--) // Sütunun en altından başlayarak yukarı çık
+        {
+            Tile currentTile = BoardData[row, columnNum];
+            if (currentTile.IsTileFilled) continue; // Eğer boş bir kutu bulduysak
+            
+            for (int upperRow = row - 1; upperRow >= 0; upperRow--) // Daha üst sıralardan dolu bir kutu ara
+            {
+                Tile upperTile = BoardData[upperRow, columnNum];
+                if (!upperTile.IsTileFilled) continue; // Eğer dolu bir kutu bulursak
+                BlockManager.Instance.MoveBlock(upperTile, currentTile);
+                break;
             }
         }
+    }
+
+    public int GetEmptyTileCountOnColumn(int columnNum)
+    {
+        int emptyTileAmount = 0;
+        for ( int row = rowsLength - 1; row >= 0; row--)
+        {
+            Tile currentTile = BoardData[row, columnNum];
+            if(currentTile.IsTileFilled) continue;
+            emptyTileAmount++;
+        }
+
+        return emptyTileAmount;
+    }
+
+    private void FillColumns(List<int> columns)
+    {
+        foreach (var column in columns)
+        {
+            OrderColumn(column);
+        }
+
+        foreach (var column in columns)
+        {
+            BlockManager.Instance.SpawnBlock(column);
+        }
+        
         
     }
 
@@ -55,7 +114,7 @@ public class Board : MonoBehaviour
     {
         var tempTileObject = new GameObject().AddComponent<Tile>();
         tempTileObject.gameObject.AddComponent<BoxCollider2D>();
-        _boardData = new Tile[rowsLength,columnsLength];
+        BoardData = new Tile[rowsLength,columnsLength];
         
         // Get the camera bounds
         float height = 2f * _camera.orthographicSize;
@@ -73,8 +132,9 @@ public class Board : MonoBehaviour
         tempTileObject.transform.localScale = cellScale;
         
         var tempBlockSpriteObject = new GameObject().AddComponent<BlockData>();
-        tempBlockSpriteObject.gameObject.AddComponent<SpriteRenderer>();
+        var spriteRenderer = tempBlockSpriteObject.gameObject.AddComponent<SpriteRenderer>();
         tempBlockSpriteObject.transform.localScale = cellScale;
+        BlockManager.Instance.SetBlockSize(0.5f);
         BlockPool = new ObjectPool<BlockData>(tempBlockSpriteObject, rowsLength * columnsLength, transform);
 
         // Calculate starting position to center the grid
@@ -90,8 +150,8 @@ public class Board : MonoBehaviour
             {
                 Vector3 position = startPosition + new Vector3(j * (cellSize + spacing), 
                     -i * (cellSize + spacing), 0);
-                _boardData[i,j] = Instantiate(tempTileObject, position, Quaternion.identity, transform);
-                _boardData[i,j].Init(i,j, BlockManager.Instance.GetRandomBlock());
+                BoardData[i,j] = Instantiate(tempTileObject, position, Quaternion.identity, transform);
+                BoardData[i,j].Init(i,j, BlockManager.Instance.GetRandomBlock());
                 index++;
             }
         }
@@ -118,14 +178,15 @@ public class Board : MonoBehaviour
             if (IsOutOfBounds(row, column) || _visitedCells[index])
                 continue;
 
-            Tile currentTile = _boardData[row, column];
-            if (currentTile.Data.BlockColor != targetColor)
-                continue;
-
+            Tile currentTile = BoardData[row, column];
+            if (!currentTile.IsTileFilled || currentTile.Data.BlockColor != targetColor) continue;
+            
             _visitedCells[index] = true;
             _matchedTiles.Add(currentTile);
 
             AddTilesToStack(row, column);
+
+
         }
 
         return _matchedTiles;
@@ -177,6 +238,6 @@ public class Board : MonoBehaviour
         if (IsOutOfBounds(row, column))
             return null;
 
-        return _boardData[row, column];
+        return BoardData[row, column];
     }
 }

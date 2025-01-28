@@ -10,11 +10,21 @@ public class InputHandler : MonoBehaviour
     public static Action<Tile> OnTileClicked;
     
     public bool Clickable { get; private set; }
+    public static Action<bool> OnControlInput;
+    
     
     private void Awake()
     {
         _mainCamera = Camera.main;
+        OnControlInput += HandleInteract;
     }
+
+    private void OnDisable()
+    {
+        OnControlInput -= HandleInteract;
+    }
+
+    private void HandleInteract(bool b) => Clickable = b;
 
     void Update()
     {
