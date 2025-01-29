@@ -20,6 +20,8 @@ public class Board : MonoBehaviour
     [Tooltip("The margin of the table to be formed from the right and left axis")] [SerializeField]
     float margin = 0.1f;
 
+    [SerializeField] private Sprite boardBackground;
+
     public Tile[,] BoardData { get; private set; }
     private Camera _camera;
     public ObjectPool<BlockData> BlockPool { get; private set; }
@@ -226,7 +228,7 @@ public class Board : MonoBehaviour
             BlockManager.Instance.SpawnBlock(column);
         }
 
-        await Tween.Delay(BlockManager.Instance.BlockSpawnFallTime);
+        await Tween.Delay(BlockManager.Instance.BlockFallTime);
 
         CheckBlockGroups(columns);
 
@@ -279,8 +281,36 @@ public class Board : MonoBehaviour
                 index++;
             }
         }
+        
+        CreateBoardBackground(startPosition, cellSize);
 
         CheckBlockGroups(Enumerable.Range(0, columnsLength).ToList());
+    }
+    
+    private void CreateBoardBackground(Vector3 startPosition, float cellSize)
+    {
+        if (boardBackground == null) return;
+
+        // Board'un gerçek genişlik ve yüksekliğini hesapla
+        float totalWidth = (columnsLength * cellSize) + ((columnsLength - 1) * spacing);
+        float totalHeight = (rowsLength * cellSize) + ((rowsLength - 1) * spacing);
+
+        // Arka plan nesnesini oluştur
+        GameObject backgroundObject = new GameObject("BoardBackground");
+        backgroundObject.transform.SetParent(transform);
+
+        SpriteRenderer renderer = backgroundObject.AddComponent<SpriteRenderer>();
+        renderer.sprite = boardBackground;
+        renderer.sortingOrder = -11; // Arkada kalması için
+
+        // Sprite'ı board'un boyutuna ölçekle
+        backgroundObject.transform.localScale = new Vector3((totalWidth / renderer.sprite.bounds.size.x) + 0.05f,
+            (totalHeight / renderer.sprite.bounds.size.y )+0.05f, 1) ;
+
+        // Board'un ortasına hizala
+        backgroundObject.transform.position = startPosition + new Vector3(totalWidth / 2 - cellSize / 2, 
+            -totalHeight / 2 + cellSize / 2, 0);
+    
     }
 
     public List<Tile> FloodFill(Tile startTile)

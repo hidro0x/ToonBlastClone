@@ -824,7 +824,8 @@ MonoBehaviour:
   rowsLength: 10
   columnsLength: 9
   spacing: -0.09
-  margin: 0.01
+  margin: 0.5
+  boardBackground: {fileID: 21300000, guid: fda4728a9e6ea8d4fb69ae97287a9aed, type: 3}
 --- !u!4 &1453748643
 Transform:
   m_ObjectHideFlags: 0
@@ -1287,8 +1288,8 @@ MonoBehaviour:
   firstIconBlockRange: {x: 4, y: 7}
   secondIconBlockRange: {x: 6, y: 9}
   thirdIconBlockRange: {x: 8, y: 999}
-  blockSpawnOffset: 0.5
-  <BlockSpawnFallTime>k__BackingField: 0.8
+  blockSpawnOffset: 1.5
+  <BlockSpawnFallTime>k__BackingField: 0.5
   <BlockFallTime>k__BackingField: 0.5
   blockBounceStrength: 0.05
 --- !u!114 &1453748645
