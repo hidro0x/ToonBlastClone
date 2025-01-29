@@ -28,6 +28,8 @@ public class Board : MonoBehaviour
     private readonly List<Tile> _matchedTiles = new();
     private bool[] _visitedCells;
 
+    #region MonoBehaviour
+
     void Start()
     {
         _camera = Camera.main;
@@ -43,6 +45,10 @@ public class Board : MonoBehaviour
     {
         InputHandler.OnTileClicked -= CheckTile;
     }
+
+    #endregion
+
+    #region Shuffling
 
     public async void StartShuffle()
     {
@@ -89,6 +95,52 @@ public class Board : MonoBehaviour
             }
         }
     }
+    
+    private bool IsBoardPlayable()
+    {
+        foreach (var tile in BoardData)
+        {
+            if (!tile.IsTileFilled)
+                continue;
+
+            if (HasMatchingNeighbors(tile))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool HasMatchingNeighbors(Tile tile)
+    {
+        var directions = new (int rowOffset, int colOffset)[]
+        {
+            (-1, 0),
+            (1, 0),
+            (0, -1),
+            (0, 1)
+        };
+
+        BlockColor targetColor = tile.Data.BlockColor;
+
+        foreach (var (rowOffset, colOffset) in directions)
+        {
+            int newRow = tile.Row + rowOffset;
+            int newColumn = tile.Column + colOffset;
+
+            if (!IsOutOfBounds(newRow, newColumn))
+            {
+                Tile neighbor = BoardData[newRow, newColumn];
+                if (neighbor.IsTileFilled && neighbor.Data.BlockColor == targetColor)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    #endregion
+
+    #region Checks
 
     private void CheckTile(Tile tile)
     {
@@ -124,6 +176,31 @@ public class Board : MonoBehaviour
         FillColumns(fillingColumns);
     }
 
+    private void CheckBlockGroups(List<int> columns)
+    {
+        //Ekstra sağ ve sol sütunu kontrol etmek için.
+        columns.Add(columns[^1] + 1);
+        columns.Add(columns[0] - 1);
+        
+
+        foreach (var column in columns)
+        {
+            for (int i = 0; i < rowsLength; i++)
+            {
+                if (IsOutOfBounds(i, column)) continue;
+                var matchedTiles = FloodFill(BoardData[i, column]);
+                foreach (var tile in matchedTiles)
+                {
+                    BlockManager.Instance.SetBlockType(tile.Data, matchedTiles.Count);
+                }
+            }
+        }
+    }
+
+    #endregion
+
+    #region Filling
+
     private void OrderColumn(int columnNum)
     {
         for (int row = rowsLength - 1; row >= 0; row--) // Sütunun en altından başlayarak yukarı çık
@@ -140,20 +217,7 @@ public class Board : MonoBehaviour
             }
         }
     }
-
-    public int GetEmptyTileCountOnColumn(int columnNum)
-    {
-        int emptyTileAmount = 0;
-        for (int row = rowsLength - 1; row >= 0; row--)
-        {
-            Tile currentTile = BoardData[row, columnNum];
-            if (currentTile.IsTileFilled) continue;
-            emptyTileAmount++;
-        }
-
-        return emptyTileAmount;
-    }
-
+    
     private async void FillColumns(List<int> columns)
     {
         foreach (var column in columns)
@@ -174,27 +238,6 @@ public class Board : MonoBehaviour
         }
 
         InputHandler.OnControlInput?.Invoke(true);
-    }
-
-    private void CheckBlockGroups(List<int> columns)
-    {
-        //Ekstra sağ ve sol sütunu kontrol etmek için.
-        columns.Add(columns[^1] + 1);
-        columns.Add(columns[0] - 1);
-        
-
-        foreach (var column in columns)
-        {
-            for (int i = 0; i < rowsLength; i++)
-            {
-                if (IsOutOfBounds(i, column)) continue;
-                var matchedTiles = FloodFill(BoardData[i, column]);
-                foreach (var tile in matchedTiles)
-                {
-                    BlockManager.Instance.SetBlockType(tile.Data, matchedTiles.Count);
-                }
-            }
-        }
     }
 
     void CreateBoard()
@@ -248,7 +291,7 @@ public class Board : MonoBehaviour
         int startColumn = startTile.Column;
         BlockColor targetColor = startTile.Data.BlockColor;
 
-        _tempStack.Push(ComputeIndex(startRow, startColumn, columnsLength));
+        _tempStack.Push(GetIndex(startRow, startColumn, columnsLength));
 
         _matchedTiles.Clear();
 
@@ -282,12 +325,7 @@ public class Board : MonoBehaviour
         else
             Array.Clear(_visitedCells, 0, totalCells);
     }
-
-    private bool IsOutOfBounds(int row, int column)
-    {
-        return row < 0 || row >= rowsLength || column < 0 || column >= columnsLength;
-    }
-
+    
     private void AddTilesToStack(int row, int column)
     {
         var directions = new (int rowOffset, int colOffset)[]
@@ -305,63 +343,40 @@ public class Board : MonoBehaviour
 
             if (!IsOutOfBounds(newRow, newColumn))
             {
-                _tempStack.Push(ComputeIndex(newRow, newColumn, columnsLength));
+                _tempStack.Push(GetIndex(newRow, newColumn, columnsLength));
             }
         }
     }
 
-    private int ComputeIndex(int row, int column, int columnCount)
+    #endregion
+
+    #region Helpers
+
+    private bool IsOutOfBounds(int row, int column)
+    {
+        return row < 0 || row >= rowsLength || column < 0 || column >= columnsLength;
+    }
+
+    private int GetIndex(int row, int column, int columnCount)
     {
         return row * columnCount + column;
     }
-
-    public Tile GetTile(int row, int column)
+    
+    public int GetEmptyTileCountOnColumn(int columnNum)
     {
-        if (IsOutOfBounds(row, column))
-            return null;
-
-        return BoardData[row, column];
-    }
-
-    private bool IsBoardPlayable()
-    {
-        foreach (var tile in BoardData)
+        int emptyTileAmount = 0;
+        for (int row = rowsLength - 1; row >= 0; row--)
         {
-            if (!tile.IsTileFilled)
-                continue;
-
-            if (HasMatchingNeighbors(tile))
-                return true;
+            Tile currentTile = BoardData[row, columnNum];
+            if (currentTile.IsTileFilled) continue;
+            emptyTileAmount++;
         }
 
-        return false;
+        return emptyTileAmount;
     }
 
-    private bool HasMatchingNeighbors(Tile tile)
-    {
-        var directions = new (int rowOffset, int colOffset)[]
-        {
-            (-1, 0),
-            (1, 0),
-            (0, -1),
-            (0, 1)
-        };
+    #endregion
+    
 
-        BlockColor targetColor = tile.Data.BlockColor;
 
-        foreach (var (rowOffset, colOffset) in directions)
-        {
-            int newRow = tile.Row + rowOffset;
-            int newColumn = tile.Column + colOffset;
-
-            if (!IsOutOfBounds(newRow, newColumn))
-            {
-                Tile neighbor = BoardData[newRow, newColumn];
-                if (neighbor.IsTileFilled && neighbor.Data.BlockColor == targetColor)
-                    return true;
-            }
-        }
-
-        return false;
-    }
 }

@@ -26,8 +26,7 @@ public class BlockData : MonoBehaviour
         BlockType = type;
         _spriteRenderer.sprite = BlockManager.Instance.GetBlockSprite(this);
     }
-
-
+    
     public void SetSpriteOrder(int row) => _spriteRenderer.sortingOrder = -row;
 }
 

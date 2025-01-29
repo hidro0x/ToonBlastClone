@@ -12,7 +12,6 @@ public class InputHandler : MonoBehaviour
     public bool Clickable { get; private set; }
     public static Action<bool> OnControlInput;
 
-
     private void Awake()
     {
         _mainCamera = Camera.main;
