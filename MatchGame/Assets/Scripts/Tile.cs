@@ -5,33 +5,33 @@ using UnityEngine.PlayerLoop;
 public class Tile : MonoBehaviour
 {
     private Vector2Int _coordinate;
-    public BlockData Data { get; private set; }
+    public Block Block { get; private set; }
     public int Row => _coordinate.x;
     public int Column => _coordinate.y;
 
-    public bool IsTileFilled => Data != null;
+    public bool IsTileFilled => Block != null;
 
-    public void Init(int rowNum, int columnNum, BlockData blockData = null)
+    public void Init(int rowNum, int columnNum, Block blockData = null)
     {
         _coordinate = new Vector2Int(rowNum, columnNum);
         AssignBlock(blockData, true);
     }
 
-    public void AssignBlock(BlockData data, bool setPosition)
+    public void AssignBlock(Block block, bool setPosition)
     {
-        if (data != null)
+        if (block != null)
         {
-            Data = data;
-            if (setPosition) data.gameObject.transform.position = transform.position;
-            data.SetSpriteOrder(Row);
+            Block = block;
+            if (setPosition) block.gameObject.transform.position = transform.position;
+            block.SetSpriteOrder(Row);
         }
     }
 
     public void RemoveBlock()
     {
-        BlockManager.Instance.RemoveBlock(Data);
-        Data = null;
+        BlockManager.Instance.RemoveBlock(Block);
+        Block = null;
     }
 
-    public void MarkAsEmpty() => Data = null;
+    public void MarkAsEmpty() => Block = null;
 }

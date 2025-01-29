@@ -27,7 +27,7 @@ public class Board : MonoBehaviour
 
     public Tile[,] BoardData { get; private set; }
     private Camera _camera;
-    public ObjectPool<BlockData> BlockPool { get; private set; }
+    public ObjectPool<Block> BlockPool { get; private set; }
 
     private readonly Stack<int> _tempStack = new();
     private readonly List<Tile> _matchedTiles = new();
@@ -89,12 +89,12 @@ public class Board : MonoBehaviour
     {
         Random random = new Random();
 
-        List<BlockData> tempBlocksList = new List<BlockData>();
+        List<Block> tempBlocksList = new List<Block>();
         for (int i = 0; i < rowsLength; i++)
         {
             for (int j = 0; j < columnsLength; j++)
             {
-                tempBlocksList.Add(BoardData[i, j].Data);
+                tempBlocksList.Add(BoardData[i, j].Block);
             }
         }
 
@@ -140,7 +140,7 @@ public class Board : MonoBehaviour
             (0, 1)
         };
 
-        BlockColor targetColor = tile.Data.BlockColor;
+        BlockColor targetColor = tile.Block.Data.BlockColor;
 
         foreach (var (rowOffset, colOffset) in directions)
         {
@@ -150,7 +150,7 @@ public class Board : MonoBehaviour
             if (!IsOutOfBounds(newRow, newColumn))
             {
                 Tile neighbor = BoardData[newRow, newColumn];
-                if (neighbor.IsTileFilled && neighbor.Data.BlockColor == targetColor)
+                if (neighbor.IsTileFilled && neighbor.Block.Data.BlockColor == targetColor)
                     return true;
             }
         }
@@ -164,12 +164,12 @@ public class Board : MonoBehaviour
 
     private void CheckTile(Tile tile)
     {
-        if (tile.Data != null)
+        if (tile.Block != null)
         {
             var matchedTiles = FloodFill(tile);
             if (matchedTiles.Count < 2)
             {
-                BlockManager.Instance.ShakeBlock(tile.Data);
+                BlockManager.Instance.ShakeBlock(tile.Block);
                 return;
             }
 
@@ -211,7 +211,7 @@ public class Board : MonoBehaviour
                 var matchedTiles = FloodFill(BoardData[i, column]);
                 foreach (var tile in matchedTiles)
                 {
-                    BlockManager.Instance.SetBlockType(tile.Data, matchedTiles.Count);
+                    BlockManager.Instance.SetBlockType(tile.Block, matchedTiles.Count);
                 }
             }
         }
@@ -246,7 +246,7 @@ public class Board : MonoBehaviour
             BlockManager.Instance.SpawnBlock(column);
         }
 
-        await Tween.Delay(BlockManager.Instance.BlockFallTime);
+        await Tween.Delay(BlockManager.Instance.Settings.BlockFallTime);
 
         CheckBlockGroups(columns);
 
@@ -277,11 +277,11 @@ public class Board : MonoBehaviour
         Vector3 cellScale = new Vector3(cellSize, cellSize, 1);
         tempTileObject.transform.localScale = cellScale;
 
-        var tempBlockSpriteObject = new GameObject().AddComponent<BlockData>();
+        var tempBlockSpriteObject = new GameObject().AddComponent<Block>();
         var spriteRenderer = tempBlockSpriteObject.gameObject.AddComponent<SpriteRenderer>();
         tempBlockSpriteObject.transform.localScale = cellScale;
         BlockManager.Instance.SetBlockSize(0.5f);
-        BlockPool = new ObjectPool<BlockData>(tempBlockSpriteObject, rowsLength * columnsLength, transform);
+        BlockPool = new ObjectPool<Block>(tempBlockSpriteObject, rowsLength * columnsLength, transform);
 
         Vector3 startPosition = new Vector3(-((columnsLength - 1) * (cellSize + spacing)) / 2,
             ((rowsLength - 1) * (cellSize + spacing)) / 2, 0);
@@ -339,7 +339,7 @@ public class Board : MonoBehaviour
 
         int startRow = startTile.Row;
         int startColumn = startTile.Column;
-        BlockColor targetColor = startTile.Data.BlockColor;
+        BlockColor targetColor = startTile.Block.Data.BlockColor;
 
         _tempStack.Push(GetIndex(startRow, startColumn, columnsLength));
 
@@ -355,7 +355,7 @@ public class Board : MonoBehaviour
                 continue;
 
             Tile currentTile = BoardData[row, column];
-            if (!currentTile.IsTileFilled || currentTile.Data.BlockColor != targetColor) continue;
+            if (!currentTile.IsTileFilled || currentTile.Block.Data.BlockColor != targetColor) continue;
 
             _visitedCells[index] = true;
             _matchedTiles.Add(currentTile);
