@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using PrimeTween;
 using UnityEngine;
+using UnityEngine.UI;
 using Random = System.Random;
 
 public class Board : MonoBehaviour
@@ -20,6 +21,8 @@ public class Board : MonoBehaviour
     [Tooltip("The margin of the table to be formed from the right and left axis")] [SerializeField]
     float margin = 0.1f;
 
+    [Header("Assets")] 
+    [SerializeField] private RectTransform shuffleButton;
     [SerializeField] private Sprite boardBackground;
 
     public Tile[,] BoardData { get; private set; }
@@ -56,15 +59,30 @@ public class Board : MonoBehaviour
     {
         InputHandler.OnControlInput?.Invoke(false);
         var currentTransform = transform;
-
-        await Tween.PositionX(currentTransform, columnsLength * BlockManager.Instance.BlockSize * 1.5f, 0.3f);
+        ShowShuffleButton(false);
+        
+        
+        await Tween.PositionX(currentTransform, columnsLength * BlockManager.Instance.BlockSize * 1.5f, 0.2f);
         await ShuffleBoardAsync();
 
+        
         transform.position = new Vector3(-columnsLength * BlockManager.Instance.BlockSize * 1.5f,
             currentTransform.position.y, 0);
-        Tween.PositionX(currentTransform, 0, 0.3f);
+        Tween.PositionX(currentTransform, 0, 0.2f);
+        ShowShuffleButton(true);
+        
+        
         CheckBlockGroups(Enumerable.Range(0, columnsLength).ToList());
         InputHandler.OnControlInput?.Invoke(true);
+    }
+
+    private void ShowShuffleButton(bool hide)
+    {
+        if (!hide)
+        {
+            Tween.UIAnchoredPositionY(shuffleButton, -shuffleButton.anchoredPosition.y, 0.4f, Ease.InQuart);
+        }else Tween.UIAnchoredPositionY(shuffleButton, Math.Abs(shuffleButton.anchoredPosition.y), 0.4f, Ease.OutQuint);
+        
     }
 
     private async Task ShuffleBoardAsync()
@@ -285,6 +303,8 @@ public class Board : MonoBehaviour
         CreateBoardBackground(startPosition, cellSize);
 
         CheckBlockGroups(Enumerable.Range(0, columnsLength).ToList());
+        
+        ShowShuffleButton(true);
     }
     
     private void CreateBoardBackground(Vector3 startPosition, float cellSize)

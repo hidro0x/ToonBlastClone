@@ -84,7 +84,7 @@ public class BlockManager : SerializedMonoBehaviour
             var spawnedBlock = GetRandomBlock();
             spawnedBlocks.Add(spawnedBlock);
             spawnedBlock.transform.localPosition =
-                new Vector2(spawnPos.x, spawnPos.y + blockSpawnOffset + (0.2f + (BlockSize * i)));
+                new Vector2(spawnPos.x, spawnPos.y + blockSpawnOffset + (0.5f*i) + (BlockSize * i));
         }
 
         for (int i = spawnAmount - 1; i >= 0; i--)
@@ -110,7 +110,7 @@ public class BlockManager : SerializedMonoBehaviour
         currentTile.MarkAsEmpty();
         targetTile.AssignBlock(movingBlock, false);
 
-        Tween.LocalPositionY(movingBlock.transform, targetTile.transform.localPosition.y, BlockFallTime, Ease.OutQuint);
+        Tween.LocalPositionY(movingBlock.transform, targetTile.transform.localPosition.y, BlockFallTime, Easing.Bounce(blockBounceStrength/3));
     }
 
     public void MoveBlock(BlockData movingBlock, Tile targetTile)
