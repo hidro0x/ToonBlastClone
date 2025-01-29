@@ -9,7 +9,7 @@ using Random = System.Random;
 
 public class Board : MonoBehaviour
 {
-    [Header("Game Rules")] [SerializeField]
+    [Header("Board Settings")] [SerializeField]
     private LevelData level;
 
     private int _rowsLength;
@@ -17,6 +17,8 @@ public class Board : MonoBehaviour
 
     [Tooltip("Margin between cells")] [SerializeField]
     float spacing = 0.1f;
+
+    private float _fixedSpacing;
 
     [Tooltip("The margin of the table to be formed from the right and left axis")] [SerializeField]
     float margin = 0.1f;
@@ -32,6 +34,7 @@ public class Board : MonoBehaviour
     private readonly Stack<int> _tempStack = new();
     private readonly List<Tile> _matchedTiles = new();
     private bool[] _visitedCells;
+    private bool _canShuffle = true;
 
     #region MonoBehaviour
 
@@ -57,6 +60,8 @@ public class Board : MonoBehaviour
 
     public async void StartShuffle()
     {
+        if(!_canShuffle) return;
+        
         foreach (var tile in BoardData)
         {
             if (tile.IsTileFilled)
@@ -67,20 +72,20 @@ public class Board : MonoBehaviour
         InputHandler.OnControlInput?.Invoke(false);
         var currentTransform = transform;
         ShowShuffleButton(false);
-        
-        
+
+        _canShuffle = false;
         await Tween.PositionX(currentTransform, _columnsLength * BlockManager.Instance.BlockSize * 1.5f, 0.2f);
         await ShuffleBoardAsync();
 
         
         transform.position = new Vector3(-_columnsLength * BlockManager.Instance.BlockSize * 1.5f,
             currentTransform.position.y, 0);
-        Tween.PositionX(currentTransform, 0, 0.2f);
+        await Tween.PositionX(currentTransform, 0, 0.2f);
         ShowShuffleButton(true);
-        
         
         CheckBlockGroups(Enumerable.Range(0, _columnsLength).ToList());
         InputHandler.OnControlInput?.Invoke(true);
+        _canShuffle = true;
     }
 
     private void ShowShuffleButton(bool hide)
@@ -180,8 +185,6 @@ public class Board : MonoBehaviour
                 return;
             }
 
-            InputHandler.OnControlInput?.Invoke(false);
-
             foreach (var element in matchedTiles)
             {
                 element.RemoveBlock();
@@ -255,14 +258,10 @@ public class Board : MonoBehaviour
         }
         
         CheckBlockGroups(columns);
-        
-        if (!IsBoardPlayable())
-        {
-            StartShuffle();
-            return;
-        }
 
-        InputHandler.OnControlInput?.Invoke(true);
+        if (IsBoardPlayable()) return;
+        StartShuffle();
+
     }
 
     void CreateBoard()
@@ -285,9 +284,10 @@ public class Board : MonoBehaviour
 
         float height = 2f * _camera.orthographicSize;
         float width = height * _camera.aspect;
+        _fixedSpacing = (_camera.aspect / -6.5f) + spacing;
 
-        float maxCellWidth = (width - 2 * margin - (_columnsLength - 1) * spacing) / _columnsLength;
-        float maxCellHeight = (height - 2 * margin - (_rowsLength - 1) * spacing) / _rowsLength;
+        float maxCellWidth = (width - 2 * margin - (_columnsLength - 1) * _fixedSpacing) / _columnsLength;
+        float maxCellHeight = (height - 2 * margin - (_rowsLength - 1) * _fixedSpacing) / _rowsLength;
 
         float cellSize = Mathf.Min(maxCellWidth, maxCellHeight);
 
@@ -300,8 +300,8 @@ public class Board : MonoBehaviour
         BlockManager.Instance.SetBlockSize(0.5f);
         BlockPool = new ObjectPool<Block>(tempBlockSpriteObject, _rowsLength * _columnsLength, transform);
 
-        Vector3 startPosition = new Vector3(-((_columnsLength - 1) * (cellSize + spacing)) / 2,
-            ((_rowsLength - 1) * (cellSize + spacing)) / 2, 0);
+        Vector3 startPosition = new Vector3(-((_columnsLength - 1) * (cellSize + _fixedSpacing)) / 2,
+            ((_rowsLength - 1) * (cellSize + _fixedSpacing)) / 2, 0);
 
 
         int index = 0;
@@ -309,8 +309,8 @@ public class Board : MonoBehaviour
         {
             for (int j = 0; j < _columnsLength; j++)
             {
-                Vector3 position = startPosition + new Vector3(j * (cellSize + spacing),
-                    -i * (cellSize + spacing), 0);
+                Vector3 position = startPosition + new Vector3(j * (cellSize + _fixedSpacing),
+                    -i * (cellSize + _fixedSpacing), 0);
                 BoardData[i, j] = Instantiate(tempTileObject, position, Quaternion.identity, transform);
                 BoardData[i, j].Init(i, j,
                     level == null
@@ -332,8 +332,8 @@ public class Board : MonoBehaviour
         if (boardBackground == null) return;
 
         // Board'un gerçek genişlik ve yüksekliğini hesapla
-        float totalWidth = (_columnsLength * cellSize) + ((_columnsLength - 1) * spacing);
-        float totalHeight = (_rowsLength * cellSize) + ((_rowsLength - 1) * spacing);
+        float totalWidth = (_columnsLength * cellSize) + ((_columnsLength - 1) * _fixedSpacing);
+        float totalHeight = (_rowsLength * cellSize) + ((_rowsLength - 1) * _fixedSpacing);
 
         // Arka plan nesnesini oluştur
         GameObject backgroundObject = new GameObject("BoardBackground");

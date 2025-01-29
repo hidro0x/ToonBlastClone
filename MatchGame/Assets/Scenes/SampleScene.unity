@@ -170,9 +170,9 @@ MonoBehaviour:
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 1920, y: 1080}
+  m_ReferenceResolution: {x: 1080, y: 1920}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 0.5
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -254,10 +254,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1525749325}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.000018064846, y: 0.00012207031}
-  m_SizeDelta: {x: 200, y: 65}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &503592448
 MonoBehaviour:
@@ -685,7 +685,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   level: {fileID: 11400000, guid: afb346a2e05b25e43b8e4c31b8900c73, type: 2}
-  spacing: -0.08
+  spacing: 0
   margin: 0.2
   shuffleButton: {fileID: 1525749325}
   boardBackground: {fileID: 21300000, guid: fda4728a9e6ea8d4fb69ae97287a9aed, type: 3}
@@ -765,7 +765,7 @@ RectTransform:
   m_GameObject: {fileID: 1525749324}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 6.006525, y: 6.237476, z: 6.0102224}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 503592447}
@@ -773,8 +773,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: -0.00012207031, y: -428.5}
-  m_SizeDelta: {x: 200, y: 64}
+  m_AnchoredPosition: {x: 0, y: 117}
+  m_SizeDelta: {x: 450, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1525749326
 MonoBehaviour:

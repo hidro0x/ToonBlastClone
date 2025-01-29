@@ -443,14 +443,109 @@ MonoBehaviour:
     - Name: 
       Entry: 8
       Data: 
+    - Name: _editorBlockSprites
+      Entry: 7
+      Data: 6|System.Collections.Generic.Dictionary`2[[BlockColor, Assembly-CSharp],[UnityEngine.Sprite,
+        UnityEngine.CoreModule]], mscorlib
+    - Name: comparer
+      Entry: 7
+      Data: 7|System.Collections.Generic.EnumEqualityComparer`1[[BlockColor, Assembly-CSharp]],
+        mscorlib
+    - Name: 
+      Entry: 12
+      Data: 0
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 12
+      Data: 0
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
   <DefaultIconBlockRange>k__BackingField: {x: 0, y: 5}
   <FirstIconBlockRange>k__BackingField: {x: 4, y: 7}
   <SecondIconBlockRange>k__BackingField: {x: 6, y: 9}
   <ThirdIconBlockRange>k__BackingField: {x: 8, y: 99}
-  <BlockSpawnOffset>k__BackingField: 1
-  <BlockSpawnFallTime>k__BackingField: 1
-  <BlockFallTime>k__BackingField: 1
-  <BlockBounceStrength>k__BackingField: 0.03
+  <BlockSpawnOffset>k__BackingField: 3
+  <BlockSpawnFallTime>k__BackingField: 2
+  <BlockFallTime>k__BackingField: 2
+  <BlockBounceStrength>k__BackingField: 0
+  <BlockBounceStrengthCurve>k__BackingField:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 5.030361
+      outSlope: 5.030361
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.19878179
+      value: 0.9999442
+      inSlope: -0.0002685853
+      outSlope: -0.0002685853
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.24039331
+      outWeight: 1
+    - serializedVersion: 3
+      time: 0.29964882
+      value: 0.97423327
+      inSlope: 0.36172834
+      outSlope: 0.36172834
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.48941427
+    - serializedVersion: 3
+      time: 0.3615375
+      value: 0.9986819
+      inSlope: -0.0077530737
+      outSlope: -0.0077530737
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.44565868
+    - serializedVersion: 3
+      time: 0.4824986
+      value: 0.9971475
+      inSlope: 0.010408927
+      outSlope: 0.010408927
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.5355103
+      outWeight: 0.34398392
+    - serializedVersion: 3
+      time: 0.8015433
+      value: 0.99903286
+      inSlope: -0.010138895
+      outSlope: -0.010138895
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.20327884
+      outWeight: 0.46884406
+    - serializedVersion: 3
+      time: 0.9998563
+      value: 1.0002412
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   <BlockSO>k__BackingField:
   - {fileID: 11400000, guid: 41f3e19cee99b6b40ada8a609c8f64ec, type: 2}
   - {fileID: 11400000, guid: 46cd10f64fdcb0048b066f84dd08eca6, type: 2}

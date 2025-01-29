@@ -19,6 +19,7 @@ public class GameSettings : SerializedScriptableObject
     [field: SerializeField] public float BlockSpawnFallTime { get; private set; }
     [field: SerializeField] public float BlockFallTime { get; private set; }
     [field: SerializeField] public float BlockBounceStrength{ get; private set; }
+    [field: SerializeField] public AnimationCurve BlockBounceStrengthCurve{ get; private set; }
     
     [Space][Header("Sprites")]
     [SerializeField] private Dictionary<BlockType, BlockSprite[]> _blockSprites =
