@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using PrimeTween;
 using UnityEngine;
@@ -7,7 +8,7 @@ using Random = System.Random;
 
 public class Board : MonoBehaviour
 {
-    [Tooltip("Rows amount of the table")] [SerializeField]
+    [Header("Game Rules")] [Tooltip("Rows amount of the table")] [SerializeField]
     int rowsLength = 5;
 
     [Tooltip("Column amount of the table")] [SerializeField]
@@ -47,10 +48,14 @@ public class Board : MonoBehaviour
     {
         InputHandler.OnControlInput?.Invoke(false);
         var currentTransform = transform;
+
         await Tween.PositionX(currentTransform, columnsLength * BlockManager.Instance.BlockSize * 1.5f, 0.3f);
         await ShuffleBoardAsync();
-        transform.position = new Vector3(-columnsLength * BlockManager.Instance.BlockSize * 1.5f, currentTransform.position.y, 0);
+
+        transform.position = new Vector3(-columnsLength * BlockManager.Instance.BlockSize * 1.5f,
+            currentTransform.position.y, 0);
         Tween.PositionX(currentTransform, 0, 0.3f);
+        CheckBlockGroups(Enumerable.Range(0, columnsLength).ToList());
         InputHandler.OnControlInput?.Invoke(true);
     }
 
@@ -80,7 +85,7 @@ public class Board : MonoBehaviour
             {
                 BoardData[i, j].MarkAsEmpty();
                 BoardData[i, j].AssignBlock(tempBlocksList[index++], true);
-                await Task.Yield(); 
+                await Task.Yield();
             }
         }
     }
@@ -151,24 +156,44 @@ public class Board : MonoBehaviour
 
     private async void FillColumns(List<int> columns)
     {
-        InputHandler.OnControlInput?.Invoke(true);
-
         foreach (var column in columns)
         {
             OrderColumn(column);
-        }
-
-        foreach (var column in columns)
-        {
             BlockManager.Instance.SpawnBlock(column);
         }
 
         await Tween.Delay(BlockManager.Instance.BlockSpawnFallTime);
-        
+
+        CheckBlockGroups(columns);
+
+
         if (!IsBoardPlayable())
         {
-
             StartShuffle();
+            return;
+        }
+
+        InputHandler.OnControlInput?.Invoke(true);
+    }
+
+    private void CheckBlockGroups(List<int> columns)
+    {
+        //Ekstra sağ ve sol sütunu kontrol etmek için.
+        columns.Add(columns[^1] + 1);
+        columns.Add(columns[0] - 1);
+        
+
+        foreach (var column in columns)
+        {
+            for (int i = 0; i < rowsLength; i++)
+            {
+                if (IsOutOfBounds(i, column)) continue;
+                var matchedTiles = FloodFill(BoardData[i, column]);
+                foreach (var tile in matchedTiles)
+                {
+                    BlockManager.Instance.SetBlockType(tile.Data, matchedTiles.Count);
+                }
+            }
         }
     }
 
@@ -178,18 +203,14 @@ public class Board : MonoBehaviour
         tempTileObject.gameObject.AddComponent<BoxCollider2D>();
         BoardData = new Tile[rowsLength, columnsLength];
 
-        // Get the camera bounds
         float height = 2f * _camera.orthographicSize;
         float width = height * _camera.aspect;
 
-        // Calculate the maximum size for square cells
         float maxCellWidth = (width - 2 * margin - (columnsLength - 1) * spacing) / columnsLength;
         float maxCellHeight = (height - 2 * margin - (rowsLength - 1) * spacing) / rowsLength;
 
-        // Use the smaller dimension for square cells
         float cellSize = Mathf.Min(maxCellWidth, maxCellHeight);
 
-        // Adjust the scale of the cells
         Vector3 cellScale = new Vector3(cellSize, cellSize, 1);
         tempTileObject.transform.localScale = cellScale;
 
@@ -199,13 +220,11 @@ public class Board : MonoBehaviour
         BlockManager.Instance.SetBlockSize(0.5f);
         BlockPool = new ObjectPool<BlockData>(tempBlockSpriteObject, rowsLength * columnsLength, transform);
 
-        // Calculate starting position to center the grid
         Vector3 startPosition = new Vector3(-((columnsLength - 1) * (cellSize + spacing)) / 2,
             ((rowsLength - 1) * (cellSize + spacing)) / 2, 0);
 
 
         int index = 0;
-        // Instantiate grid cells with spacing
         for (int i = 0; i < rowsLength; i++)
         {
             for (int j = 0; j < columnsLength; j++)
@@ -217,6 +236,8 @@ public class Board : MonoBehaviour
                 index++;
             }
         }
+
+        CheckBlockGroups(Enumerable.Range(0, columnsLength).ToList());
     }
 
     public List<Tile> FloodFill(Tile startTile)
@@ -271,10 +292,10 @@ public class Board : MonoBehaviour
     {
         var directions = new (int rowOffset, int colOffset)[]
         {
-            (-1, 0), // Left
-            (1, 0), // Right
-            (0, -1), // Up
-            (0, 1) // Down
+            (-1, 0),
+            (1, 0),
+            (0, -1),
+            (0, 1)
         };
 
         foreach (var (rowOffset, colOffset) in directions)

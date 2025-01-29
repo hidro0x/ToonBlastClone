@@ -154,7 +154,7 @@ MonoBehaviour:
   m_BlockingObjects: 0
   m_BlockingMask:
     serializedVersion: 2
-    m_Bits: 55
+    m_Bits: 4294967295
 --- !u!114 &321483315
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1283,9 +1283,13 @@ MonoBehaviour:
     - Name: 
       Entry: 8
       Data: 
-  blockSpawnOffset: 1
-  <BlockSpawnFallTime>k__BackingField: 0.5
-  <BlockFallTime>k__BackingField: 0.3
+  defaultIconBlockRange: {x: 0, y: 5}
+  firstIconBlockRange: {x: 4, y: 7}
+  secondIconBlockRange: {x: 6, y: 9}
+  thirdIconBlockRange: {x: 8, y: 999}
+  blockSpawnOffset: 0.5
+  <BlockSpawnFallTime>k__BackingField: 0.8
+  <BlockFallTime>k__BackingField: 0.5
   blockBounceStrength: 0.05
 --- !u!114 &1453748645
 MonoBehaviour:

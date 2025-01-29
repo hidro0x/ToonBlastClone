@@ -8,15 +8,15 @@ public class InputHandler : MonoBehaviour
 {
     private Camera _mainCamera;
     public static Action<Tile> OnTileClicked;
-    
+
     public bool Clickable { get; private set; }
     public static Action<bool> OnControlInput;
-    
-    
+
+
     private void Awake()
     {
         _mainCamera = Camera.main;
-        
+
         OnControlInput += HandleInteract;
         Clickable = true;
     }
@@ -55,13 +55,13 @@ public class InputHandler : MonoBehaviour
 
     private void ProcessInput(Vector3 screenPosition)
     {
-        if(!Clickable) return;
+        if (!Clickable) return;
         Vector3 worldPosition = _mainCamera.ScreenToWorldPoint(screenPosition);
         Vector2 rayOrigin = new Vector2(worldPosition.x, worldPosition.y);
-        
+
         RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.zero);
-        
-        
+
+
         if (hit.collider != null)
         {
             Tile tileComponent = hit.transform.GetComponent<Tile>();

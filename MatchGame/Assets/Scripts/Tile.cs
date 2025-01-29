@@ -10,7 +10,7 @@ public class Tile : MonoBehaviour
     public int Column => _coordinate.y;
 
     public bool IsTileFilled => Data != null;
-   
+
     public void Init(int rowNum, int columnNum, BlockData blockData = null)
     {
         _coordinate = new Vector2Int(rowNum, columnNum);
@@ -22,11 +22,11 @@ public class Tile : MonoBehaviour
         if (data != null)
         {
             Data = data;
-            if(setPosition)data.gameObject.transform.position = transform.position;
+            if (setPosition) data.gameObject.transform.position = transform.position;
             data.SetSpriteOrder(Row);
         }
     }
-    
+
     public void RemoveBlock()
     {
         BlockManager.Instance.RemoveBlock(Data);
