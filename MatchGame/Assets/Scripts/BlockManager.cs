@@ -11,21 +11,12 @@ public class BlockManager : SerializedMonoBehaviour
     public static BlockManager Instance { get; private set; }
     private Board _board;
 
-
-    [Header("Effects")] private float _blockSize;
-    [field: SerializeField] public float BlockSpawnOffset { get; private set; }
-    [field: SerializeField] public float BlockSpawnFallSpeed { get; private set; }
-    [field: SerializeField] public float BlockFallSpeed { get; private set; }
-    [field: SerializeField] public float BlockBounceStrength { get; private set; }
-
-
-    private void Awake()
-    {
-        _board = GetComponent<Board>();
-        Instance = this;
-    }
-    
-    
+    [Header("Effects")] 
+    public float BlockSize { get; private set; }
+    [SerializeField] private float blockSpawnOffset;
+    [field:SerializeField] public float BlockSpawnFallTime { get; private set; }
+    [field:SerializeField] public float BlockFallTime{ get; private set; }
+    [SerializeField] private float blockBounceStrength;
 
     [SerializeField] private Dictionary<BlockType, BlockSprite[]> blockSprites = new Dictionary<BlockType, BlockSprite[]>()
     {
@@ -34,6 +25,12 @@ public class BlockManager : SerializedMonoBehaviour
         { BlockType.Portal ,new[]{new BlockSprite(BlockColor.Red), new BlockSprite(BlockColor.Blue), new BlockSprite(BlockColor.Green), new BlockSprite(BlockColor.Pink), new BlockSprite(BlockColor.Purple), new BlockSprite(BlockColor.Yellow)}},
         { BlockType.Rocket ,new[]{new BlockSprite(BlockColor.Red), new BlockSprite(BlockColor.Blue), new BlockSprite(BlockColor.Green), new BlockSprite(BlockColor.Pink), new BlockSprite(BlockColor.Purple), new BlockSprite(BlockColor.Yellow)}},
     };
+    
+    private void Awake()
+    {
+        _board = GetComponent<Board>();
+        Instance = this;
+    }
 
     public Sprite GetBlockSprite(BlockData blockData){
         return blockSprites[blockData.BlockType].FirstOrDefault(s => s.Color == blockData.BlockColor).Sprite;
@@ -56,7 +53,7 @@ public class BlockManager : SerializedMonoBehaviour
         {
             var spawnedBlock = GetRandomBlock();
             spawnedBlocks.Add(spawnedBlock);
-            spawnedBlock.transform.localPosition = new Vector2(spawnPos.x, spawnPos.y + BlockSpawnOffset + (_blockSize * i) + 0.3f);
+            spawnedBlock.transform.localPosition = new Vector2(spawnPos.x, spawnPos.y + blockSpawnOffset + (BlockSize * i) + 0.3f);
         }
 
         for (int i = spawnAmount - 1; i >= 0; i--)
@@ -83,18 +80,24 @@ public class BlockManager : SerializedMonoBehaviour
         currentTile.MarkAsEmpty();
         targetTile.AssignBlock(movingBlock, false);
         
-        Tween.LocalPositionY(movingBlock.transform, targetTile.transform.localPosition.y, BlockFallSpeed, Easing.Bounce(BlockBounceStrength));
+        Tween.LocalPositionY(movingBlock.transform, targetTile.transform.localPosition.y, BlockFallTime, Easing.Bounce(blockBounceStrength));
     }
     
     public void MoveBlock(BlockData movingBlock, Tile targetTile)
     {
         if(targetTile.IsTileFilled) return;
         targetTile.AssignBlock(movingBlock, false);
-        Tween.LocalPositionY(movingBlock.transform, targetTile.transform.localPosition.y, BlockSpawnFallSpeed,Easing.Bounce(BlockBounceStrength));
+        Tween.LocalPositionY(movingBlock.transform, targetTile.transform.localPosition.y, BlockSpawnFallTime,
+            Easing.Bounce(blockBounceStrength));
+
+    }
+
+    public void ShakeBlock(BlockData block)
+    {
+        Tween.ShakeLocalRotation(block.transform, new Vector3(0, 0, 30), 0.2f);
     }
     
-
-    public void SetBlockSize(float f) => _blockSize = f;
+    public void SetBlockSize(float f) => BlockSize = f;
 
 
 }

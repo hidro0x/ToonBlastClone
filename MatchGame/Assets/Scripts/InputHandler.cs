@@ -16,7 +16,9 @@ public class InputHandler : MonoBehaviour
     private void Awake()
     {
         _mainCamera = Camera.main;
+        
         OnControlInput += HandleInteract;
+        Clickable = true;
     }
 
     private void OnDisable()
@@ -53,6 +55,7 @@ public class InputHandler : MonoBehaviour
 
     private void ProcessInput(Vector3 screenPosition)
     {
+        if(!Clickable) return;
         Vector3 worldPosition = _mainCamera.ScreenToWorldPoint(screenPosition);
         Vector2 rayOrigin = new Vector2(worldPosition.x, worldPosition.y);
         

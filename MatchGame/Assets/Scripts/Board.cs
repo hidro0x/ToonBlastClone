@@ -1,22 +1,28 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using PrimeTween;
 using UnityEngine;
+using Random = System.Random;
 
 public class Board : MonoBehaviour
 {
-    [Tooltip("Rows amount of the table")]
-    [SerializeField] int rowsLength = 5;
-    [Tooltip("Column amount of the table")]
-    [SerializeField] int columnsLength = 5;
-    [Tooltip("Margin between cells")]
-    [SerializeField] float spacing = 0.1f;
-    [Tooltip("The margin of the table to be formed from the right and left axis")]
-    [SerializeField] float margin = 0.1f;
+    [Tooltip("Rows amount of the table")] [SerializeField]
+    int rowsLength = 5;
+
+    [Tooltip("Column amount of the table")] [SerializeField]
+    int columnsLength = 5;
+
+    [Tooltip("Margin between cells")] [SerializeField]
+    float spacing = 0.1f;
+
+    [Tooltip("The margin of the table to be formed from the right and left axis")] [SerializeField]
+    float margin = 0.1f;
 
     public Tile[,] BoardData { get; private set; }
     private Camera _camera;
     public ObjectPool<BlockData> BlockPool { get; private set; }
-    
+
     private readonly Stack<int> _tempStack = new();
     private readonly List<Tile> _matchedTiles = new();
     private bool[] _visitedCells;
@@ -26,31 +32,79 @@ public class Board : MonoBehaviour
         _camera = Camera.main;
         CreateBoard();
     }
-    
+
     private void OnEnable()
     {
         InputHandler.OnTileClicked += CheckTile;
     }
+
     private void OnDisable()
     {
         InputHandler.OnTileClicked -= CheckTile;
     }
-    
+
+    public async void StartShuffle()
+    {
+        InputHandler.OnControlInput?.Invoke(false);
+        var currentTransform = transform;
+        await Tween.PositionX(currentTransform, columnsLength * BlockManager.Instance.BlockSize * 1.5f, 0.3f);
+        await ShuffleBoardAsync();
+        transform.position = new Vector3(-columnsLength * BlockManager.Instance.BlockSize * 1.5f, currentTransform.position.y, 0);
+        Tween.PositionX(currentTransform, 0, 0.3f);
+        InputHandler.OnControlInput?.Invoke(true);
+    }
+
+    private async Task ShuffleBoardAsync()
+    {
+        Random random = new Random();
+
+        List<BlockData> tempBlocksList = new List<BlockData>();
+        for (int i = 0; i < rowsLength; i++)
+        {
+            for (int j = 0; j < columnsLength; j++)
+            {
+                tempBlocksList.Add(BoardData[i, j].Data);
+            }
+        }
+
+        for (int i = tempBlocksList.Count - 1; i > 0; i--)
+        {
+            int j = random.Next(0, i + 1);
+            (tempBlocksList[i], tempBlocksList[j]) = (tempBlocksList[j], tempBlocksList[i]);
+        }
+
+        int index = 0;
+        for (int i = 0; i < rowsLength; i++)
+        {
+            for (int j = 0; j < columnsLength; j++)
+            {
+                BoardData[i, j].MarkAsEmpty();
+                BoardData[i, j].AssignBlock(tempBlocksList[index++], true);
+                await Task.Yield(); 
+            }
+        }
+    }
+
     private void CheckTile(Tile tile)
     {
         if (tile.Data != null)
         {
-            var matchedTiles =FloodFill(tile);
-            if(matchedTiles.Count < 2) return;
+            var matchedTiles = FloodFill(tile);
+            if (matchedTiles.Count < 2)
+            {
+                BlockManager.Instance.ShakeBlock(tile.Data);
+                return;
+            }
+
+            InputHandler.OnControlInput?.Invoke(false);
 
             foreach (var element in matchedTiles)
             {
                 element.RemoveBlock();
             }
-            
+
             CheckRows(matchedTiles);
         }
-        
     }
 
     private void CheckRows(List<Tile> tiles)
@@ -58,7 +112,7 @@ public class Board : MonoBehaviour
         var fillingColumns = new List<int>();
         foreach (var tile in tiles)
         {
-            if(fillingColumns.Contains(tile.Column)) continue;
+            if (fillingColumns.Contains(tile.Column)) continue;
             fillingColumns.Add(tile.Column);
         }
 
@@ -67,11 +121,11 @@ public class Board : MonoBehaviour
 
     private void OrderColumn(int columnNum)
     {
-        for ( int row = rowsLength - 1; row >= 0; row--) // Sütunun en altından başlayarak yukarı çık
+        for (int row = rowsLength - 1; row >= 0; row--) // Sütunun en altından başlayarak yukarı çık
         {
             Tile currentTile = BoardData[row, columnNum];
             if (currentTile.IsTileFilled) continue; // Eğer boş bir kutu bulduysak
-            
+
             for (int upperRow = row - 1; upperRow >= 0; upperRow--) // Daha üst sıralardan dolu bir kutu ara
             {
                 Tile upperTile = BoardData[upperRow, columnNum];
@@ -85,18 +139,20 @@ public class Board : MonoBehaviour
     public int GetEmptyTileCountOnColumn(int columnNum)
     {
         int emptyTileAmount = 0;
-        for ( int row = rowsLength - 1; row >= 0; row--)
+        for (int row = rowsLength - 1; row >= 0; row--)
         {
             Tile currentTile = BoardData[row, columnNum];
-            if(currentTile.IsTileFilled) continue;
+            if (currentTile.IsTileFilled) continue;
             emptyTileAmount++;
         }
 
         return emptyTileAmount;
     }
 
-    private void FillColumns(List<int> columns)
+    private async void FillColumns(List<int> columns)
     {
+        InputHandler.OnControlInput?.Invoke(true);
+
         foreach (var column in columns)
         {
             OrderColumn(column);
@@ -106,16 +162,22 @@ public class Board : MonoBehaviour
         {
             BlockManager.Instance.SpawnBlock(column);
         }
+
+        await Tween.Delay(BlockManager.Instance.BlockSpawnFallTime);
         
-        
+        if (!IsBoardPlayable())
+        {
+
+            StartShuffle();
+        }
     }
 
     void CreateBoard()
     {
         var tempTileObject = new GameObject().AddComponent<Tile>();
         tempTileObject.gameObject.AddComponent<BoxCollider2D>();
-        BoardData = new Tile[rowsLength,columnsLength];
-        
+        BoardData = new Tile[rowsLength, columnsLength];
+
         // Get the camera bounds
         float height = 2f * _camera.orthographicSize;
         float width = height * _camera.aspect;
@@ -130,7 +192,7 @@ public class Board : MonoBehaviour
         // Adjust the scale of the cells
         Vector3 cellScale = new Vector3(cellSize, cellSize, 1);
         tempTileObject.transform.localScale = cellScale;
-        
+
         var tempBlockSpriteObject = new GameObject().AddComponent<BlockData>();
         var spriteRenderer = tempBlockSpriteObject.gameObject.AddComponent<SpriteRenderer>();
         tempBlockSpriteObject.transform.localScale = cellScale;
@@ -138,7 +200,7 @@ public class Board : MonoBehaviour
         BlockPool = new ObjectPool<BlockData>(tempBlockSpriteObject, rowsLength * columnsLength, transform);
 
         // Calculate starting position to center the grid
-        Vector3 startPosition = new Vector3(-((columnsLength - 1) * (cellSize + spacing)) / 2, 
+        Vector3 startPosition = new Vector3(-((columnsLength - 1) * (cellSize + spacing)) / 2,
             ((rowsLength - 1) * (cellSize + spacing)) / 2, 0);
 
 
@@ -148,10 +210,10 @@ public class Board : MonoBehaviour
         {
             for (int j = 0; j < columnsLength; j++)
             {
-                Vector3 position = startPosition + new Vector3(j * (cellSize + spacing), 
+                Vector3 position = startPosition + new Vector3(j * (cellSize + spacing),
                     -i * (cellSize + spacing), 0);
-                BoardData[i,j] = Instantiate(tempTileObject, position, Quaternion.identity, transform);
-                BoardData[i,j].Init(i,j, BlockManager.Instance.GetRandomBlock());
+                BoardData[i, j] = Instantiate(tempTileObject, position, Quaternion.identity, transform);
+                BoardData[i, j].Init(i, j, BlockManager.Instance.GetRandomBlock());
                 index++;
             }
         }
@@ -180,13 +242,11 @@ public class Board : MonoBehaviour
 
             Tile currentTile = BoardData[row, column];
             if (!currentTile.IsTileFilled || currentTile.Data.BlockColor != targetColor) continue;
-            
+
             _visitedCells[index] = true;
             _matchedTiles.Add(currentTile);
 
             AddTilesToStack(row, column);
-
-
         }
 
         return _matchedTiles;
@@ -209,11 +269,12 @@ public class Board : MonoBehaviour
 
     private void AddTilesToStack(int row, int column)
     {
-        var directions = new (int rowOffset, int colOffset)[] {
+        var directions = new (int rowOffset, int colOffset)[]
+        {
             (-1, 0), // Left
-            (1, 0),  // Right
+            (1, 0), // Right
             (0, -1), // Up
-            (0, 1)   // Down
+            (0, 1) // Down
         };
 
         foreach (var (rowOffset, colOffset) in directions)
@@ -239,5 +300,47 @@ public class Board : MonoBehaviour
             return null;
 
         return BoardData[row, column];
+    }
+
+    private bool IsBoardPlayable()
+    {
+        foreach (var tile in BoardData)
+        {
+            if (!tile.IsTileFilled)
+                continue;
+
+            if (HasMatchingNeighbors(tile))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool HasMatchingNeighbors(Tile tile)
+    {
+        var directions = new (int rowOffset, int colOffset)[]
+        {
+            (-1, 0),
+            (1, 0),
+            (0, -1),
+            (0, 1)
+        };
+
+        BlockColor targetColor = tile.Data.BlockColor;
+
+        foreach (var (rowOffset, colOffset) in directions)
+        {
+            int newRow = tile.Row + rowOffset;
+            int newColumn = tile.Column + colOffset;
+
+            if (!IsOutOfBounds(newRow, newColumn))
+            {
+                Tile neighbor = BoardData[newRow, newColumn];
+                if (neighbor.IsTileFilled && neighbor.Data.BlockColor == targetColor)
+                    return true;
+            }
+        }
+
+        return false;
     }
 }
