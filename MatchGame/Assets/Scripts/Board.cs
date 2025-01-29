@@ -57,6 +57,13 @@ public class Board : MonoBehaviour
 
     public async void StartShuffle()
     {
+        foreach (var tile in BoardData)
+        {
+            if (tile.IsTileFilled)
+            {
+                tile.Block.CompleteAnimation();
+            }
+        }
         InputHandler.OnControlInput?.Invoke(false);
         var currentTransform = transform;
         ShowShuffleButton(false);
@@ -231,6 +238,7 @@ public class Board : MonoBehaviour
             for (int upperRow = row - 1; upperRow >= 0; upperRow--) // Daha üst sıralardan dolu bir kutu ara
             {
                 Tile upperTile = BoardData[upperRow, columnNum];
+                
                 if (!upperTile.IsTileFilled) continue; // Eğer dolu bir kutu bulursak
                 BlockManager.Instance.MoveBlock(upperTile, currentTile);
                 break;
@@ -238,19 +246,16 @@ public class Board : MonoBehaviour
         }
     }
     
-    private async void FillColumns(List<int> columns)
+    private void FillColumns(List<int> columns)
     {
         foreach (var column in columns)
         {
             OrderColumn(column);
             BlockManager.Instance.SpawnBlock(column);
         }
-
-        await Tween.Delay(BlockManager.Instance.Settings.BlockFallTime);
-
+        
         CheckBlockGroups(columns);
-
-
+        
         if (!IsBoardPlayable())
         {
             StartShuffle();

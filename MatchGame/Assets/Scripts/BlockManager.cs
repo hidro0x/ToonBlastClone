@@ -58,15 +58,16 @@ public class BlockManager : SerializedMonoBehaviour
         currentTile.MarkAsEmpty();
         targetTile.AssignBlock(movingBlock, false);
 
-        Tween.LocalPositionY(movingBlock.transform, targetTile.transform.localPosition.y, Settings.BlockFallTime, Easing.Bounce(Settings.BlockBounceStrength/3));
+        movingBlock.PlayAnimation(Tween.LocalPositionAtSpeed(movingBlock.transform, targetTile.transform.localPosition, Settings.BlockFallTime,
+            Easing.Bounce(Settings.BlockBounceStrength / 3)));
     }
 
     public void MoveBlock(Block movingBlock, Tile targetTile)
     {
         if (targetTile.IsTileFilled) return;
         targetTile.AssignBlock(movingBlock, false);
-        Tween.LocalPositionY(movingBlock.transform, targetTile.transform.localPosition.y, Settings.BlockSpawnFallTime,
-            Easing.Bounce(Settings.BlockBounceStrength));
+
+        movingBlock.PlayAnimation(Tween.LocalPositionAtSpeed(movingBlock.transform, targetTile.transform.localPosition, Settings.BlockSpawnFallTime, Easing.Bounce(Settings.BlockBounceStrength)));
     }
 
 
