@@ -62,6 +62,8 @@ public class GameSettings : SerializedScriptableObject
             },
         };
 
+    [SerializeField] private Dictionary<BlockColor, Sprite> _editorBlockSprites = new Dictionary<BlockColor, Sprite>();
+
     [field:SerializeField] public List<BlockData> BlockSO { get; private set; }
 
     public Dictionary<BlockType, BlockSprite[]> BlockSprites => _blockSprites;

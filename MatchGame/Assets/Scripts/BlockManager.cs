@@ -84,6 +84,13 @@ public class BlockManager : SerializedMonoBehaviour
         block.ChangeBlock(Settings.BlockSO[Random.Range(0,6)]);
         return block;
     }
+    
+    public Block GetBlock(BlockColor color, BlockType type = BlockType.Default)
+    {
+        var block = _board.BlockPool.Get();
+        block.ChangeBlock(Settings.BlockSO.First(x=>x.BlockColor == color), type);
+        return block;
+    }
 
     public void ShakeBlock(Block block)
     {

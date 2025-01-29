@@ -684,8 +684,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6b35627c5b8bf64793816a5e510525a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rowsLength: 10
-  columnsLength: 9
+  level: {fileID: 11400000, guid: afb346a2e05b25e43b8e4c31b8900c73, type: 2}
   spacing: -0.08
   margin: 0.2
   shuffleButton: {fileID: 1525749325}
