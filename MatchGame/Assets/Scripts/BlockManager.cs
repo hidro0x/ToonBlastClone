@@ -65,7 +65,7 @@ public class BlockManager : SerializedMonoBehaviour
         currentTile.MarkAsEmpty();
         targetTile.AssignBlock(movingBlock, false);
 
-        movingBlock.PlayAnimation(Tween.LocalPositionAtSpeed(movingBlock.transform, targetTile.transform.localPosition, Settings.BlockFallTime,
+        movingBlock.PlayAnimation(Tween.LocalPositionAtSpeed(movingBlock.transform, targetTile.transform.localPosition, Settings.BlockFallSpeed,
             Ease.OutQuint));
     }
 
@@ -75,7 +75,7 @@ public class BlockManager : SerializedMonoBehaviour
         targetTile.AssignBlock(movingBlock, false);
 
         //movingBlock.PlayAnimation(Tween.LocalPositionAtSpeed(movingBlock.transform, targetTile.transform.localPosition, Settings.BlockSpawnFallTime, Easing.Bounce(Settings.BlockBounceStrength)));
-        movingBlock.PlayAnimation(Tween.LocalPositionAtSpeed(movingBlock.transform, targetTile.transform.localPosition, Settings.BlockSpawnFallTime, Settings.BlockBounceStrengthCurve));
+        movingBlock.PlayAnimation(Tween.LocalPositionAtSpeed(movingBlock.transform, targetTile.transform.localPosition, Settings.BlockSpawnFallSpeed, Settings.BlockBounceStrengthCurve));
     }
 
 

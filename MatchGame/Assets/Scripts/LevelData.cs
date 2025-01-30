@@ -43,6 +43,7 @@ public class LevelData : SerializedScriptableObject
                 }
             }
         }
+        EditorUtility.SetDirty(this);
     }
 
     public static EditorSettings LoadEditorSettingsFromFolder()

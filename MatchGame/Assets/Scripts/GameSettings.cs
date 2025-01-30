@@ -15,10 +15,8 @@ public class GameSettings : SerializedScriptableObject
 
     [field: Header("Effects")] [field: Space] 
     [field: SerializeField] public float BlockSpawnOffset{ get; private set; }
-
-    [field: SerializeField] public float BlockSpawnFallTime { get; private set; }
-    [field: SerializeField] public float BlockFallTime { get; private set; }
-    [field: SerializeField] public float BlockBounceStrength{ get; private set; }
+    [field: SerializeField] public float BlockSpawnFallSpeed { get; private set; }
+    [field: SerializeField] public float BlockFallSpeed { get; private set; }
     [field: SerializeField] public AnimationCurve BlockBounceStrengthCurve{ get; private set; }
     
     [Space][Header("Sprites")]

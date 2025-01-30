@@ -15,8 +15,8 @@ public class Board : MonoBehaviour
     private int _rowsLength;
     private int _columnsLength;
 
-    [Tooltip("Margin between cells")] [SerializeField]
-    float spacing = 0.1f;
+    // [Tooltip("Margin between cells")] [SerializeField]
+    // float spacing = 0.1f;
 
     private float _fixedSpacing;
 
@@ -74,13 +74,15 @@ public class Board : MonoBehaviour
         ShowShuffleButton(false);
 
         _canShuffle = false;
-        await Tween.PositionX(currentTransform, _columnsLength * BlockManager.Instance.BlockSize * 1.5f, 0.2f);
-        await ShuffleBoardAsync();
-
+        await Tween.PositionX(currentTransform, _columnsLength * BlockManager.Instance.BlockSize * 1.5f, 0.4f).OnComplete(
+            delegate
+            {
+                transform.position = new Vector3(-_columnsLength * BlockManager.Instance.BlockSize * 1.5f, currentTransform.position.y, 0);
+            });
         
-        transform.position = new Vector3(-_columnsLength * BlockManager.Instance.BlockSize * 1.5f,
-            currentTransform.position.y, 0);
-        await Tween.PositionX(currentTransform, 0, 0.2f);
+        await ShuffleBoardAsync();
+        
+        await Tween.PositionX(currentTransform, 0, 0.4f);
         ShowShuffleButton(true);
         
         CheckBlockGroups(Enumerable.Range(0, _columnsLength).ToList());
@@ -279,31 +281,31 @@ public class Board : MonoBehaviour
         
         
         var tempTileObject = new GameObject().AddComponent<Tile>();
-        tempTileObject.gameObject.AddComponent<BoxCollider2D>();
+        var collider = tempTileObject.gameObject.AddComponent<BoxCollider2D>();
+        BlockManager.Instance.SetBlockSize(collider.bounds.size.y);
         BoardData = new Tile[_rowsLength, _columnsLength];
 
         float height = 2f * _camera.orthographicSize;
         float width = height * _camera.aspect;
-        _fixedSpacing = (_camera.aspect / -6.5f) + spacing;
+        //_fixedSpacing = (_camera.aspect / -6.5f) + spacing;
 
         float maxCellWidth = (width - 2 * margin - (_columnsLength - 1) * _fixedSpacing) / _columnsLength;
         float maxCellHeight = (height - 2 * margin - (_rowsLength - 1) * _fixedSpacing) / _rowsLength;
 
         float cellSize = Mathf.Min(maxCellWidth, maxCellHeight);
 
-        Vector3 cellScale = new Vector3(cellSize, cellSize, 1);
+        Vector3 cellScale = new Vector3(cellSize*1.17f, cellSize*1.17f, 1);
         tempTileObject.transform.localScale = cellScale;
 
         var tempBlockSpriteObject = new GameObject().AddComponent<Block>();
         var spriteRenderer = tempBlockSpriteObject.gameObject.AddComponent<SpriteRenderer>();
         tempBlockSpriteObject.transform.localScale = cellScale;
-        BlockManager.Instance.SetBlockSize(0.5f);
+        
         BlockPool = new ObjectPool<Block>(tempBlockSpriteObject, _rowsLength * _columnsLength, transform);
 
         Vector3 startPosition = new Vector3(-((_columnsLength - 1) * (cellSize + _fixedSpacing)) / 2,
             ((_rowsLength - 1) * (cellSize + _fixedSpacing)) / 2, 0);
-
-
+        
         int index = 0;
         for (int i = 0; i < _rowsLength; i++)
         {
@@ -323,6 +325,9 @@ public class Board : MonoBehaviour
         CreateBoardBackground(startPosition, cellSize);
 
         CheckBlockGroups(Enumerable.Range(0, _columnsLength).ToList());
+        
+        Destroy(tempTileObject);
+        Destroy(tempBlockSpriteObject);
         
         ShowShuffleButton(true);
     }

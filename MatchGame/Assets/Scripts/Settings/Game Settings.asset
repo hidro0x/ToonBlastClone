@@ -474,9 +474,8 @@ MonoBehaviour:
   <SecondIconBlockRange>k__BackingField: {x: 6, y: 9}
   <ThirdIconBlockRange>k__BackingField: {x: 8, y: 99}
   <BlockSpawnOffset>k__BackingField: 3
-  <BlockSpawnFallTime>k__BackingField: 2
-  <BlockFallTime>k__BackingField: 2
-  <BlockBounceStrength>k__BackingField: 0
+  <BlockSpawnFallSpeed>k__BackingField: 2
+  <BlockFallSpeed>k__BackingField: 2.5
   <BlockBounceStrengthCurve>k__BackingField:
     serializedVersion: 2
     m_Curve:
@@ -499,8 +498,8 @@ MonoBehaviour:
       inWeight: 0.24039331
       outWeight: 1
     - serializedVersion: 3
-      time: 0.29964882
-      value: 0.97423327
+      time: 0.26968056
+      value: 0.95772326
       inSlope: 0.36172834
       outSlope: 0.36172834
       tangentMode: 0
@@ -509,7 +508,7 @@ MonoBehaviour:
       outWeight: 0.48941427
     - serializedVersion: 3
       time: 0.3615375
-      value: 0.9986819
+      value: 1
       inSlope: -0.0077530737
       outSlope: -0.0077530737
       tangentMode: 0
@@ -517,26 +516,8 @@ MonoBehaviour:
       inWeight: 0.33333334
       outWeight: 0.44565868
     - serializedVersion: 3
-      time: 0.4824986
-      value: 0.9971475
-      inSlope: 0.010408927
-      outSlope: 0.010408927
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.5355103
-      outWeight: 0.34398392
-    - serializedVersion: 3
-      time: 0.8015433
-      value: 0.99903286
-      inSlope: -0.010138895
-      outSlope: -0.010138895
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.20327884
-      outWeight: 0.46884406
-    - serializedVersion: 3
-      time: 0.9998563
-      value: 1.0002412
+      time: 1
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
