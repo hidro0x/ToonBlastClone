@@ -10,61 +10,9 @@ public class BlockManager : SerializedMonoBehaviour
 {
     public static BlockManager Instance { get; private set; }
     private Board _board;
-
-    [Header("Game Rules")] [SerializeField]
-    private Vector2Int defaultIconBlockRange;
-
-    [SerializeField] private Vector2Int firstIconBlockRange;
-    [SerializeField] private Vector2Int secondIconBlockRange;
-    [SerializeField] private Vector2Int thirdIconBlockRange;
-
-    [field: Header("Effects")] [field: Space] [SerializeField]
-    private float blockSpawnOffset;
-
-    [field: SerializeField] public float BlockSpawnFallTime { get; private set; }
-    [field: SerializeField] public float BlockFallTime { get; private set; }
-    [SerializeField] private float blockBounceStrength;
-
-    [Space] [SerializeField] private Dictionary<BlockType, BlockSprite[]> blockSprites =
-        new Dictionary<BlockType, BlockSprite[]>()
-        {
-            {
-                BlockType.Default,
-                new[]
-                {
-                    new BlockSprite(BlockColor.Red), new BlockSprite(BlockColor.Blue),
-                    new BlockSprite(BlockColor.Green), new BlockSprite(BlockColor.Pink),
-                    new BlockSprite(BlockColor.Purple), new BlockSprite(BlockColor.Yellow)
-                }
-            },
-            {
-                BlockType.Bomb,
-                new[]
-                {
-                    new BlockSprite(BlockColor.Red), new BlockSprite(BlockColor.Blue),
-                    new BlockSprite(BlockColor.Green), new BlockSprite(BlockColor.Pink),
-                    new BlockSprite(BlockColor.Purple), new BlockSprite(BlockColor.Yellow)
-                }
-            },
-            {
-                BlockType.Portal,
-                new[]
-                {
-                    new BlockSprite(BlockColor.Red), new BlockSprite(BlockColor.Blue),
-                    new BlockSprite(BlockColor.Green), new BlockSprite(BlockColor.Pink),
-                    new BlockSprite(BlockColor.Purple), new BlockSprite(BlockColor.Yellow)
-                }
-            },
-            {
-                BlockType.Rocket,
-                new[]
-                {
-                    new BlockSprite(BlockColor.Red), new BlockSprite(BlockColor.Blue),
-                    new BlockSprite(BlockColor.Green), new BlockSprite(BlockColor.Pink),
-                    new BlockSprite(BlockColor.Purple), new BlockSprite(BlockColor.Yellow)
-                }
-            },
-        };
+    
+    [field:SerializeField] public GameSettings Settings { get; private set; }
+    
 
     public float BlockSize { get; private set; }
     private void Awake()
@@ -75,7 +23,7 @@ public class BlockManager : SerializedMonoBehaviour
     
     public void SpawnBlock(int columnNum)
     {
-        List<BlockData> spawnedBlocks = new List<BlockData>();
+        List<Block> spawnedBlocks = new List<Block>();
         var spawnPos = _board.BoardData[0, columnNum].transform.localPosition;
         var spawnAmount = _board.GetEmptyTileCountOnColumn(columnNum);
 
@@ -84,74 +32,103 @@ public class BlockManager : SerializedMonoBehaviour
             var spawnedBlock = GetRandomBlock();
             spawnedBlocks.Add(spawnedBlock);
             spawnedBlock.transform.localPosition =
-                new Vector2(spawnPos.x, spawnPos.y + blockSpawnOffset + (0.5f*i) + (BlockSize * i));
+                new Vector2(spawnPos.x, spawnPos.y + Settings.BlockSpawnOffset + (0.5f*i) + (BlockSize * i));
         }
 
         for (int i = spawnAmount - 1; i >= 0; i--)
         {
+            
             MoveBlock(spawnedBlocks[0], _board.BoardData[i, columnNum]);
             spawnedBlocks.RemoveAt(0);
         }
     }
     
-    public void RemoveBlock(BlockData data)
+    public void RemoveBlock(Block block)
     {
-        if (data != null)
+        if (block != null)
         {
-            _board.BlockPool.Return(data);
+            _board.BlockPool.Return(block);
+            // var localScale = block.transform.localScale;
+            // block.PlayAnimation(Tween.Scale(block.transform, 0 ,0.1f, Ease.InQuint).OnComplete(delegate
+            // {
+            //     _board.BlockPool.Return(block);
+            //     block.transform.localScale = localScale;
+            // }));
         }
     }
     
     public void MoveBlock(Tile currentTile, Tile targetTile)
     {
         if (targetTile.IsTileFilled) return;
-        var movingBlock = currentTile.Data;
+        var movingBlock = currentTile.Block;
 
         currentTile.MarkAsEmpty();
         targetTile.AssignBlock(movingBlock, false);
 
-        Tween.LocalPositionY(movingBlock.transform, targetTile.transform.localPosition.y, BlockFallTime, Easing.Bounce(blockBounceStrength/3));
+        movingBlock.PlayAnimation(Tween.LocalPositionAtSpeed(movingBlock.transform, targetTile.transform.localPosition, Settings.BlockFallTime,
+            Ease.OutQuint));
     }
 
-    public void MoveBlock(BlockData movingBlock, Tile targetTile)
+    public void MoveBlock(Block movingBlock, Tile targetTile)
     {
         if (targetTile.IsTileFilled) return;
         targetTile.AssignBlock(movingBlock, false);
-        Tween.LocalPositionY(movingBlock.transform, targetTile.transform.localPosition.y, BlockSpawnFallTime,
-            Easing.Bounce(blockBounceStrength));
+
+        //movingBlock.PlayAnimation(Tween.LocalPositionAtSpeed(movingBlock.transform, targetTile.transform.localPosition, Settings.BlockSpawnFallTime, Easing.Bounce(Settings.BlockBounceStrength)));
+        movingBlock.PlayAnimation(Tween.LocalPositionAtSpeed(movingBlock.transform, targetTile.transform.localPosition, Settings.BlockSpawnFallTime, Settings.BlockBounceStrengthCurve));
     }
 
 
     #region Helpers
 
-    public BlockData GetRandomBlock()
+    // public Block GetBlock(BlockType type, BlockColor color)
+    // {
+    //     var block = _blocksSO[type].First(x => x.Data.BlockColor == color);
+    //     return block;
+    // }
+    
+    public Block GetRandomBlock()
     {
         var block = _board.BlockPool.Get();
-        block.ChangeBlock(BlockType.Default, (BlockColor)Random.Range(0, 6));
+        block.ChangeBlock(Settings.BlockSO[Random.Range(0,6)]);
         return block;
     }
-    public Sprite GetBlockSprite(BlockData blockData)
+    
+    public Block GetBlock(BlockColor color, BlockType type = BlockType.Default)
     {
-        return blockSprites[blockData.BlockType].FirstOrDefault(s => s.Color == blockData.BlockColor).Sprite;
+        var block = _board.BlockPool.Get();
+        block.ChangeBlock(Settings.BlockSO.First(x=>x.BlockColor == color), type);
+        return block;
     }
 
-    public void ShakeBlock(BlockData block)
+    public void ShakeBlock(Block block)
     {
         Tween.ShakeLocalRotation(block.transform, new Vector3(0, 0, 30), 0.2f);
     }
 
     public void SetBlockSize(float f) => BlockSize = f;
-    public void SetBlockType(BlockData blockData, int amount)
+    public void SetBlockType(Block block, int amount)
     {
         var blockType = amount switch
         {
-            var a when defaultIconBlockRange.x < a && a < defaultIconBlockRange.y => BlockType.Default,
-            var a when firstIconBlockRange.x < a && a < firstIconBlockRange.y => BlockType.Rocket,
-            var a when secondIconBlockRange.x < a && a < secondIconBlockRange.y => BlockType.Bomb,
-            var a when thirdIconBlockRange.x < a && a < thirdIconBlockRange.y => BlockType.Portal,
+            var a when Settings.DefaultIconBlockRange.x < a && a < Settings.DefaultIconBlockRange.y => BlockType.Default,
+            var a when Settings.FirstIconBlockRange.x < a && a < Settings.FirstIconBlockRange.y => BlockType.Rocket,
+            var a when Settings.SecondIconBlockRange.x < a && a < Settings.SecondIconBlockRange.y =>BlockType.Bomb,
+            var a when Settings.ThirdIconBlockRange.x < a && a < Settings.ThirdIconBlockRange.y => BlockType.Portal,
             _ => throw new ArgumentOutOfRangeException(nameof(amount), amount, null)
         };
-        blockData.ChangeBlock(blockType);
+        block.ChangeBlock(block.Data, blockType);
+    }
+
+    public Sprite GetBlockSprite(Block block)
+    {
+        foreach (var blockSprite in Settings.BlockSprites[block.BlockType])
+        {
+            if(blockSprite.Color !=  block.Data.BlockColor) continue;
+            return blockSprite.Sprite;
+        }
+
+        return null;
     }
 
     #endregion
