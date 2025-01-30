@@ -1,7 +1,11 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using PrimeTween;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
-public static class UIHelper
+public static class Helpers
 {
     public static Tween MoveOnScreen(GameObject gameObject, Vector2 direction, float duration = 1.5f)
     {
@@ -45,4 +49,46 @@ public static class UIHelper
 
         return Tween.LocalPosition(transform, targetPosition, duration, Ease.InOutQuad);
     }
+    
+    public static List<Vector2Int> SelectRandomElements(int row, int column, int x)
+    {
+        List<Vector2Int> allElements = new List<Vector2Int>();
+
+        for (int i = 0; i < row; i++)
+        {
+            for (int j = 0; j < column; j++)
+            {
+                allElements.Add(new Vector2Int(i,j));
+            }
+        }
+
+        List<Vector2Int> selected = new List<Vector2Int>();
+
+        for (int i = 0; i < x; i++)
+        {
+            if (allElements.Count == 0) break; 
+            int randomIndex = Random.Range(0, allElements.Count);
+            selected.Add(allElements[randomIndex]);
+            allElements.RemoveAt(randomIndex);
+        }
+
+        return selected;
+    }
+    
+    public static List<int> GenerateRandomDivisors(int x)
+    {
+        System.Random random = new System.Random();
+        List<int> numbers = new List<int>();
+
+        while (x >= 4) 
+        {
+            int part = random.Next(2, x - 1); 
+            numbers.Add(part);
+            x -= part;
+        }
+
+        numbers.Add(x); 
+        return numbers;
+    }
+
 }

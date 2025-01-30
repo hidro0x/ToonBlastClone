@@ -19,6 +19,7 @@ public class Board : MonoBehaviour
     float spacing = 0.1f;
 
     private float _fixedSpacing;
+    private float _fixedMargin;
 
     [Tooltip("The margin of the table to be formed from the right and left axis")] [SerializeField]
     float margin = 0.1f;
@@ -34,6 +35,7 @@ public class Board : MonoBehaviour
     private readonly Stack<int> _tempStack = new();
     private readonly List<Tile> _matchedTiles = new();
     private bool[] _visitedCells;
+    private bool[] _placedCells;
     private bool _canShuffle = true;
 
     #region MonoBehaviour
@@ -116,6 +118,46 @@ public class Board : MonoBehaviour
                 await UniTask.Yield();
             }
         }
+
+        var floodCounts = Helpers.GenerateRandomDivisors(random.Next(2, Math.Max(_rowsLength, _columnsLength)));
+        var randomTiles = Helpers.SelectRandomElements(_rowsLength, _columnsLength, floodCounts.Count);
+
+        InitializeFloodFill(ref _placedCells);
+        
+        for (int i = 0; i < floodCounts.Count; i++)
+        {
+            FloodFillWithAmount(BoardData[randomTiles[i].x, randomTiles[i].y], floodCounts[i]);
+        }
+    }
+    
+    private void FloodFillWithAmount(Tile startTile, int count)
+    {
+        var floodCount = count;
+        var placedTiles = new bool[_rowsLength * _columnsLength];
+        
+        int startRow = startTile.Row;
+        int startColumn = startTile.Column;
+        
+        _tempStack.Push(GetIndex(startRow, startColumn, _columnsLength));
+        while (floodCount > 0)
+        {
+            int index = _tempStack.Pop();
+            int row = index / _columnsLength;
+            int column = index % _columnsLength;
+
+            if (IsOutOfBounds(row, column) || placedTiles[index])
+                continue;
+
+            Tile currentTile = BoardData[row, column];
+            if (!currentTile.IsTileFilled) continue;
+            currentTile.Block.ChangeBlock(startTile.Block.Data);
+            floodCount--;
+            placedTiles[index] = true;
+            _matchedTiles.Add(currentTile);
+
+            AddTilesToStack(row, column);
+        }
+        
     }
 
     
@@ -302,21 +344,20 @@ public class Board : MonoBehaviour
             _rowsLength = level.Row;
             _columnsLength = level.Column;
         }
-
-
         
         BoardData = new Tile[_rowsLength, _columnsLength];
 
         float height = 2f * _camera.orthographicSize;
         float width = height * _camera.aspect;
         _fixedSpacing = (_camera.aspect / -6.5f) * spacing;
+        _fixedMargin = margin * (_camera.aspect / 6.5f);
 
-        float maxCellWidth = (width - 2 * margin - (_columnsLength - 1) * _fixedSpacing) / _columnsLength;
-        float maxCellHeight = (height - 2 * margin - (_rowsLength - 1) * _fixedSpacing) / _rowsLength;
+        float maxCellWidth = (width - 2 * _fixedMargin - (_columnsLength - 1) * _fixedSpacing) / _columnsLength;
+        float maxCellHeight = (height - 2 * _fixedMargin - (_rowsLength - 1) * _fixedSpacing) / _rowsLength;
 
         float cellSize = Mathf.Min(maxCellWidth, maxCellHeight);
 
-        Vector3 cellScale = new Vector3(cellSize * 1.17f, cellSize * 1.17f, 1);
+        Vector3 cellScale = new Vector3(cellSize * 1.15f, cellSize * 1.15f, 1);
 
         await InitializePoolsAsync(_rowsLength * _columnsLength, cellScale);
         BlockManager.Instance.SetBlockSize(0.5f);
@@ -339,15 +380,14 @@ public class Board : MonoBehaviour
                     level == null
                         ? BlockManager.Instance.GetRandomBlock()
                         : BlockManager.Instance.GetBlock(level.Board[j, i].BlockColor));
-                await UniTask.Yield();
             }
         }
 
         CheckBlockGroups(Enumerable.Range(0, _columnsLength).ToList());
-        await CreateBoardBackground(startPosition, cellSize);
+        await CreateBoardBackground(cellSize);
     }
 
-    private async UniTask CreateBoardBackground(Vector3 startPosition, float cellSize)
+    private async UniTask CreateBoardBackground(float cellSize)
     {
         if (boardBackground == null) return;
 
@@ -362,8 +402,8 @@ public class Board : MonoBehaviour
         renderer.sortingOrder = -99;
 
         backgroundObject.transform.localScale = new Vector3(
-            (totalWidth / renderer.sprite.bounds.size.x) + 0.05f,
-            (totalHeight / renderer.sprite.bounds.size.y) + 0.05f, 
+            (totalWidth / renderer.sprite.bounds.size.x) + 0.1f,
+            (totalHeight / renderer.sprite.bounds.size.y) + 0.1f, 
             1);
 
         backgroundObject.transform.localPosition = Vector3.zero;
@@ -372,7 +412,7 @@ public class Board : MonoBehaviour
 
     public List<Tile> FloodFill(Tile startTile)
     {
-        InitializeFloodFill();
+        InitializeFloodFill(ref _visitedCells);
 
         int startRow = startTile.Row;
         int startColumn = startTile.Column;
@@ -402,15 +442,15 @@ public class Board : MonoBehaviour
 
         return _matchedTiles;
     }
-
-    private void InitializeFloodFill()
+    
+    private void InitializeFloodFill(ref bool[] cells)
     {
         int totalCells = _rowsLength * _columnsLength;
 
-        if (_visitedCells == null || _visitedCells.Length < totalCells)
-            _visitedCells = new bool[totalCells];
+        if (cells == null || cells.Length < totalCells)
+            cells = new bool[totalCells];
         else
-            Array.Clear(_visitedCells, 0, totalCells);
+            Array.Clear(cells, 0, totalCells);
     }
 
     private void AddTilesToStack(int row, int column)
@@ -434,7 +474,8 @@ public class Board : MonoBehaviour
             }
         }
     }
-
+    
+    
     #endregion
 
     #region Helpers
@@ -469,15 +510,15 @@ public class Board : MonoBehaviour
     private Tween SetVisibilityShuffleButton(bool visibility)
     {
         return visibility
-            ? UIHelper.MoveOnScreen(shuffleButton.gameObject, Vector2.up, 0.4f)
-            : UIHelper.MoveOnScreen(shuffleButton.gameObject, Vector2.down, 0.4f);
+            ? Helpers.MoveOnScreen(shuffleButton.gameObject, Vector2.up, 1f)
+            : Helpers.MoveOnScreen(shuffleButton.gameObject, Vector2.down, 1f);
     }
 
     private Tween SetVisibilityBoard(bool visibility)
     {
         return visibility
-            ? UIHelper.MoveOnScreen(transform.gameObject, Vector2.zero, 0.4f)
-            : UIHelper.MoveOnScreen(transform.gameObject, Vector2.right, 0.4f);
+            ? Helpers.MoveOnScreen(transform.gameObject, Vector2.zero, 1f)
+            : Helpers.MoveOnScreen(transform.gameObject, Vector2.right, 1f);
     }
 
     private Sequence SetVisibilityBoardElements(bool visibility)
