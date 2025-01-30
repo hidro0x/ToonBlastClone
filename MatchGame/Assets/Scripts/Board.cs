@@ -15,8 +15,8 @@ public class Board : MonoBehaviour
     private int _rowsLength;
     private int _columnsLength;
 
-    // [Tooltip("Margin between cells")] [SerializeField]
-    // float spacing = 0.1f;
+    [Tooltip("Margin between cells")] [SerializeField]
+    float spacing = 0.1f;
 
     private float _fixedSpacing;
 
@@ -70,33 +70,33 @@ public class Board : MonoBehaviour
             }
         }
         InputHandler.OnControlInput?.Invoke(false);
-        var currentTransform = transform;
-        ShowShuffleButton(false);
-
         _canShuffle = false;
-        await Tween.PositionX(currentTransform, _columnsLength * BlockManager.Instance.BlockSize * 1.5f, 0.4f).OnComplete(
-            delegate
-            {
-                transform.position = new Vector3(-_columnsLength * BlockManager.Instance.BlockSize * 1.5f, currentTransform.position.y, 0);
-            });
         
+        await SetVisibilityBoardElements(false);
+
         await ShuffleBoardAsync();
         
-        await Tween.PositionX(currentTransform, 0, 0.4f);
-        ShowShuffleButton(true);
+        await SetVisibilityBoardElements(true);
         
         CheckBlockGroups(Enumerable.Range(0, _columnsLength).ToList());
+        
         InputHandler.OnControlInput?.Invoke(true);
         _canShuffle = true;
     }
 
-    private void ShowShuffleButton(bool hide)
+    private Tween SetVisibilityShuffleButton(bool visibility)
     {
-        if (!hide)
-        {
-            Tween.UIAnchoredPositionY(shuffleButton, -shuffleButton.anchoredPosition.y, 0.4f, Ease.InQuart);
-        }else Tween.UIAnchoredPositionY(shuffleButton, Math.Abs(shuffleButton.anchoredPosition.y), 0.4f, Ease.OutQuint);
-        
+        return visibility ? UIHelper.MoveOnScreen(shuffleButton.gameObject, Vector2.up,0.4f) : UIHelper.MoveOnScreen(shuffleButton.gameObject,Vector2.down, 0.4f);
+    }
+    
+    private Tween SetVisibilityBoard(bool visibility)
+    {
+        return visibility ?  UIHelper.MoveOnScreen(transform.gameObject,Vector2.zero, 0.4f) : UIHelper.MoveOnScreen(transform.gameObject, Vector2.right, 0.4f) ;
+    }
+
+    private Sequence SetVisibilityBoardElements(bool visibility)
+    {
+        return Sequence.Create().Group(SetVisibilityShuffleButton(visibility)).Group(SetVisibilityBoard(visibility));
     }
 
     private async Task ShuffleBoardAsync()
@@ -287,7 +287,7 @@ public class Board : MonoBehaviour
 
         float height = 2f * _camera.orthographicSize;
         float width = height * _camera.aspect;
-        //_fixedSpacing = (_camera.aspect / -6.5f) + spacing;
+        _fixedSpacing = (_camera.aspect / -6.5f) * spacing;
 
         float maxCellWidth = (width - 2 * margin - (_columnsLength - 1) * _fixedSpacing) / _columnsLength;
         float maxCellHeight = (height - 2 * margin - (_rowsLength - 1) * _fixedSpacing) / _rowsLength;
@@ -329,7 +329,7 @@ public class Board : MonoBehaviour
         Destroy(tempTileObject);
         Destroy(tempBlockSpriteObject);
         
-        ShowShuffleButton(true);
+        SetVisibilityShuffleButton(true);
     }
     
     private void CreateBoardBackground(Vector3 startPosition, float cellSize)
