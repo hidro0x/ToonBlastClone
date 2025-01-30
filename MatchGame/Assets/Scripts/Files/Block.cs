@@ -27,6 +27,8 @@ public class Block : MonoBehaviour
         Refresh();
     }
 
+    #region visual
+
     public void PlayAnimation(Tween tween)
     {
         if (_playingAnimation.isAlive) _playingAnimation.Stop();
@@ -39,4 +41,6 @@ public class Block : MonoBehaviour
     }
 
     public void SetSpriteOrder(int row) => _spriteRenderer.sortingOrder = -row;
+
+    #endregion
 }

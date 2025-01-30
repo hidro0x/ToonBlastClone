@@ -12,9 +12,7 @@ public class BlockManager : SerializedMonoBehaviour
     private Board _board;
     
     [field:SerializeField] public GameSettings Settings { get; private set; }
-    
-
-    public float BlockSize { get; private set; }
+    private float _blockSize;
     private void Awake()
     {
         _board = GetComponent<Board>();
@@ -32,7 +30,7 @@ public class BlockManager : SerializedMonoBehaviour
             var spawnedBlock = GetRandomBlock();
             spawnedBlocks.Add(spawnedBlock);
             spawnedBlock.transform.localPosition =
-                new Vector2(spawnPos.x, spawnPos.y + Settings.BlockSpawnOffset + (0.5f*i) + (BlockSize * i));
+                new Vector2(spawnPos.x, spawnPos.y + Settings.BlockSpawnOffset + (0.5f*i) + (_blockSize * i));
         }
 
         for (int i = spawnAmount - 1; i >= 0; i--)
@@ -80,12 +78,7 @@ public class BlockManager : SerializedMonoBehaviour
 
 
     #region Helpers
-
-    // public Block GetBlock(BlockType type, BlockColor color)
-    // {
-    //     var block = _blocksSO[type].First(x => x.Data.BlockColor == color);
-    //     return block;
-    // }
+    
     
     public Block GetRandomBlock()
     {
@@ -106,7 +99,7 @@ public class BlockManager : SerializedMonoBehaviour
         Tween.ShakeLocalRotation(block.transform, new Vector3(0, 0, 30), 0.2f);
     }
 
-    public void SetBlockSize(float f) => BlockSize = f;
+    public void SetBlockSize(float f) => _blockSize = f;
     public void SetBlockType(Block block, int amount)
     {
         var blockType = amount switch

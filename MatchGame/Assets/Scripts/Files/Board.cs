@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using PrimeTween;
 using UnityEngine;
-using UnityEngine.UI;
 using Random = System.Random;
 
 public class Board : MonoBehaviour
@@ -23,8 +22,7 @@ public class Board : MonoBehaviour
     [Tooltip("The margin of the table to be formed from the right and left axis")] [SerializeField]
     float margin = 0.1f;
 
-    [Header("Assets")] 
-    [SerializeField] private RectTransform shuffleButton;
+    [Header("Assets")] [SerializeField] private RectTransform shuffleButton;
     [SerializeField] private Sprite boardBackground;
 
     public Tile[,] BoardData { get; private set; }
@@ -60,8 +58,8 @@ public class Board : MonoBehaviour
 
     public async void StartShuffle()
     {
-        if(!_canShuffle) return;
-        
+        if (!_canShuffle) return;
+
         foreach (var tile in BoardData)
         {
             if (tile.IsTileFilled)
@@ -69,36 +67,23 @@ public class Board : MonoBehaviour
                 tile.Block.CompleteAnimation();
             }
         }
+
         InputHandler.OnControlInput?.Invoke(false);
         _canShuffle = false;
-        
+
         await SetVisibilityBoardElements(false);
 
         await ShuffleBoardAsync();
-        
+
         await SetVisibilityBoardElements(true);
-        
+
         CheckBlockGroups(Enumerable.Range(0, _columnsLength).ToList());
-        
+
         InputHandler.OnControlInput?.Invoke(true);
         _canShuffle = true;
     }
 
-    private Tween SetVisibilityShuffleButton(bool visibility)
-    {
-        return visibility ? UIHelper.MoveOnScreen(shuffleButton.gameObject, Vector2.up,0.4f) : UIHelper.MoveOnScreen(shuffleButton.gameObject,Vector2.down, 0.4f);
-    }
     
-    private Tween SetVisibilityBoard(bool visibility)
-    {
-        return visibility ?  UIHelper.MoveOnScreen(transform.gameObject,Vector2.zero, 0.4f) : UIHelper.MoveOnScreen(transform.gameObject, Vector2.right, 0.4f) ;
-    }
-
-    private Sequence SetVisibilityBoardElements(bool visibility)
-    {
-        return Sequence.Create().Group(SetVisibilityShuffleButton(visibility)).Group(SetVisibilityBoard(visibility));
-    }
-
     private async Task ShuffleBoardAsync()
     {
         Random random = new Random();
@@ -129,7 +114,7 @@ public class Board : MonoBehaviour
             }
         }
     }
-    
+
     private bool IsBoardPlayable()
     {
         foreach (var tile in BoardData)
@@ -213,7 +198,7 @@ public class Board : MonoBehaviour
         //Ekstra sağ ve sol sütunu kontrol etmek için.
         columns.Add(columns[^1] + 1);
         columns.Add(columns[0] - 1);
-        
+
 
         foreach (var column in columns)
         {
@@ -243,14 +228,14 @@ public class Board : MonoBehaviour
             for (int upperRow = row - 1; upperRow >= 0; upperRow--) // Daha üst sıralardan dolu bir kutu ara
             {
                 Tile upperTile = BoardData[upperRow, columnNum];
-                
+
                 if (!upperTile.IsTileFilled) continue; // Eğer dolu bir kutu bulursak
                 BlockManager.Instance.MoveBlock(upperTile, currentTile);
                 break;
             }
         }
     }
-    
+
     private void FillColumns(List<int> columns)
     {
         foreach (var column in columns)
@@ -258,12 +243,11 @@ public class Board : MonoBehaviour
             OrderColumn(column);
             BlockManager.Instance.SpawnBlock(column);
         }
-        
+
         CheckBlockGroups(columns);
 
         if (IsBoardPlayable()) return;
         StartShuffle();
-
     }
 
     void CreateBoard()
@@ -278,8 +262,8 @@ public class Board : MonoBehaviour
             _rowsLength = level.Row;
             _columnsLength = level.Column;
         }
-        
-        
+
+
         var tempTileObject = new GameObject().AddComponent<Tile>();
         var collider = tempTileObject.gameObject.AddComponent<BoxCollider2D>();
         BlockManager.Instance.SetBlockSize(collider.bounds.size.y);
@@ -294,18 +278,18 @@ public class Board : MonoBehaviour
 
         float cellSize = Mathf.Min(maxCellWidth, maxCellHeight);
 
-        Vector3 cellScale = new Vector3(cellSize*1.17f, cellSize*1.17f, 1);
+        Vector3 cellScale = new Vector3(cellSize * 1.17f, cellSize * 1.17f, 1);
         tempTileObject.transform.localScale = cellScale;
 
         var tempBlockSpriteObject = new GameObject().AddComponent<Block>();
         var spriteRenderer = tempBlockSpriteObject.gameObject.AddComponent<SpriteRenderer>();
         tempBlockSpriteObject.transform.localScale = cellScale;
-        
+
         BlockPool = new ObjectPool<Block>(tempBlockSpriteObject, _rowsLength * _columnsLength, transform);
 
         Vector3 startPosition = new Vector3(-((_columnsLength - 1) * (cellSize + _fixedSpacing)) / 2,
             ((_rowsLength - 1) * (cellSize + _fixedSpacing)) / 2, 0);
-        
+
         int index = 0;
         for (int i = 0; i < _rowsLength; i++)
         {
@@ -321,41 +305,36 @@ public class Board : MonoBehaviour
                 index++;
             }
         }
-        
+
         CreateBoardBackground(startPosition, cellSize);
 
         CheckBlockGroups(Enumerable.Range(0, _columnsLength).ToList());
-        
+
         Destroy(tempTileObject);
         Destroy(tempBlockSpriteObject);
-        
+
         SetVisibilityShuffleButton(true);
     }
-    
+
     private void CreateBoardBackground(Vector3 startPosition, float cellSize)
     {
         if (boardBackground == null) return;
 
-        // Board'un gerçek genişlik ve yüksekliğini hesapla
         float totalWidth = (_columnsLength * cellSize) + ((_columnsLength - 1) * _fixedSpacing);
         float totalHeight = (_rowsLength * cellSize) + ((_rowsLength - 1) * _fixedSpacing);
-
-        // Arka plan nesnesini oluştur
+        
         GameObject backgroundObject = new GameObject("BoardBackground");
         backgroundObject.transform.SetParent(transform);
 
         SpriteRenderer renderer = backgroundObject.AddComponent<SpriteRenderer>();
         renderer.sprite = boardBackground;
-        renderer.sortingOrder = -11; // Arkada kalması için
+        renderer.sortingOrder = -99; 
 
-        // Sprite'ı board'un boyutuna ölçekle
         backgroundObject.transform.localScale = new Vector3((totalWidth / renderer.sprite.bounds.size.x) + 0.05f,
-            (totalHeight / renderer.sprite.bounds.size.y )+0.05f, 1) ;
+            (totalHeight / renderer.sprite.bounds.size.y) + 0.05f, 1);
 
-        // Board'un ortasına hizala
-        backgroundObject.transform.position = startPosition + new Vector3(totalWidth / 2 - cellSize / 2, 
+        backgroundObject.transform.position = startPosition + new Vector3(totalWidth / 2 - cellSize / 2,
             -totalHeight / 2 + cellSize / 2, 0);
-    
     }
 
     public List<Tile> FloodFill(Tile startTile)
@@ -400,7 +379,7 @@ public class Board : MonoBehaviour
         else
             Array.Clear(_visitedCells, 0, totalCells);
     }
-    
+
     private void AddTilesToStack(int row, int column)
     {
         var directions = new (int rowOffset, int colOffset)[]
@@ -436,7 +415,7 @@ public class Board : MonoBehaviour
     {
         return row * columnCount + column;
     }
-    
+
     public int GetEmptyTileCountOnColumn(int columnNum)
     {
         int emptyTileAmount = 0;
@@ -451,7 +430,27 @@ public class Board : MonoBehaviour
     }
 
     #endregion
-    
 
+    #region Visual
 
+    private Tween SetVisibilityShuffleButton(bool visibility)
+    {
+        return visibility
+            ? UIHelper.MoveOnScreen(shuffleButton.gameObject, Vector2.up, 0.4f)
+            : UIHelper.MoveOnScreen(shuffleButton.gameObject, Vector2.down, 0.4f);
+    }
+
+    private Tween SetVisibilityBoard(bool visibility)
+    {
+        return visibility
+            ? UIHelper.MoveOnScreen(transform.gameObject, Vector2.zero, 0.4f)
+            : UIHelper.MoveOnScreen(transform.gameObject, Vector2.right, 0.4f);
+    }
+
+    private Sequence SetVisibilityBoardElements(bool visibility)
+    {
+        return Sequence.Create().Group(SetVisibilityShuffleButton(visibility)).Group(SetVisibilityBoard(visibility));
+    }
+
+    #endregion
 }

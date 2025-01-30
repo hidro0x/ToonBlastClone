@@ -9,7 +9,7 @@ public class InputHandler : MonoBehaviour
     private Camera _mainCamera;
     public static Action<Tile> OnTileClicked;
 
-    public bool Clickable { get; private set; }
+    private bool _clickable;
     public static Action<bool> OnControlInput;
 
     private void Awake()
@@ -17,7 +17,7 @@ public class InputHandler : MonoBehaviour
         _mainCamera = Camera.main;
 
         OnControlInput += HandleInteract;
-        Clickable = true;
+        _clickable = true;
     }
 
     private void OnDisable()
@@ -25,7 +25,7 @@ public class InputHandler : MonoBehaviour
         OnControlInput -= HandleInteract;
     }
 
-    private void HandleInteract(bool b) => Clickable = b;
+    private void HandleInteract(bool b) => _clickable = b;
 
     void Update()
     {
@@ -54,7 +54,7 @@ public class InputHandler : MonoBehaviour
 
     private void ProcessInput(Vector3 screenPosition)
     {
-        if (!Clickable) return;
+        if (!_clickable) return;
         Vector3 worldPosition = _mainCamera.ScreenToWorldPoint(screenPosition);
         Vector2 rayOrigin = new Vector2(worldPosition.x, worldPosition.y);
 

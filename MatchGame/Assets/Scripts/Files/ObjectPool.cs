@@ -48,7 +48,7 @@ public class ObjectPool<T> where T : Component
     public void ReturnAllObjects()
     {
         _objectPool.Clear();
-        
+
         foreach (var obj in _objectList)
         {
             obj.gameObject.SetActive(false);

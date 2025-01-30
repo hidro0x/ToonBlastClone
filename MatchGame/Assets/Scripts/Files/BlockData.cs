@@ -9,9 +9,7 @@ using UnityEngine;
 public class BlockData : SerializedScriptableObject
 {
     [field:SerializeField]public BlockColor BlockColor { get; private set; }
-    [SerializeField]private Color editorColor;
 
-    public Color GetEditorColor => editorColor;
 }
 
 [Serializable]

@@ -9,11 +9,21 @@ using Random = UnityEngine.Random;
 [Serializable]
 public class LevelData : SerializedScriptableObject
 {
-    [field:HideInInspector][field:SerializeField]public int Row { get; private set; }
-    [field:HideInInspector][field:SerializeField]public int Column{ get; private set; }
+    [field: HideInInspector]
+    [field: SerializeField]
+    public int Row { get; private set; }
 
-    [field:HideInInspector][field:SerializeField]public EditorSettings EditorSettings { get; private set; }
-    [field:HideInInspector][field:SerializeField]public GameSettings GameSettings { get; private set; }
+    [field: HideInInspector]
+    [field: SerializeField]
+    public int Column { get; private set; }
+
+    [field: HideInInspector]
+    [field: SerializeField]
+    public EditorSettings EditorSettings { get; private set; }
+
+    [field: HideInInspector]
+    [field: SerializeField]
+    public GameSettings GameSettings { get; private set; }
 
     [TableMatrix(HorizontalTitle = "Board", DrawElementMethod = "DrawElement", ResizableColumns = false,
         RowHeight = 75)]
@@ -24,7 +34,7 @@ public class LevelData : SerializedScriptableObject
     {
         EditorSettings = LoadEditorSettingsFromFolder();
         GameSettings = LoadGameSettingsFromFolder();
-        
+
         Board = new BlockData[row, column];
         Row = row;
         Column = column;
@@ -33,21 +43,20 @@ public class LevelData : SerializedScriptableObject
             for (int j = 0; j < Board.GetLength(1); j++)
             {
                 if (
-                    randomness) 
+                    randomness)
                 {
-                    Board[i, j] = GameSettings.BlockSO[Random.Range(0, GameSettings.BlockSO.Count)]; 
+                    Board[i, j] = GameSettings.BlockSO[Random.Range(0, GameSettings.BlockSO.Count)];
                 }
                 else
                 {
-                    Board[i, j] = null; 
+                    Board[i, j] = null;
                 }
             }
         }
-        
+
         EditorUtility.SetDirty(this);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        
     }
 
     public static EditorSettings LoadEditorSettingsFromFolder()
@@ -64,7 +73,7 @@ public class LevelData : SerializedScriptableObject
         Debug.LogWarning("Editor ayarı bulunamadı: " + folderPath);
         return null;
     }
-    
+
     public static GameSettings LoadGameSettingsFromFolder()
     {
         string folderPath = "Assets/Scripts/Settings"; // Klasör yolu
@@ -79,16 +88,15 @@ public class LevelData : SerializedScriptableObject
         Debug.LogWarning("Editor ayarı bulunamadı: " + folderPath);
         return null;
     }
-    
-    
 
 
 #if UNITY_EDITOR
-private static int objectPickerID;
-private static Vector2Int selectedCell = new Vector2Int(-1, -1);
-private static BlockData DrawElement(Rect rect, BlockData value, BlockData[,] array, int y, int x, LevelData levelData)
+    private static int objectPickerID;
+    private static Vector2Int selectedCell = new Vector2Int(-1, -1);
+    private static BlockData DrawElement(Rect rect, BlockData value, BlockData[,] array, int y, int x,
+        LevelData levelData)
     {
-        if(objectPickerID == 0) objectPickerID = GUIUtility.GetControlID(FocusType.Passive);
+        if (objectPickerID == 0) objectPickerID = GUIUtility.GetControlID(FocusType.Passive);
         if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
         {
             selectedCell = new Vector2Int(x, y);
@@ -104,16 +112,18 @@ private static BlockData DrawElement(Rect rect, BlockData value, BlockData[,] ar
             if (selectedObject != null && selectedCell == new Vector2Int(x, y))
             {
                 array[x, y] = selectedObject;
-                EditorUtility.SetDirty(array[x,y]);
+                EditorUtility.SetDirty(array[x, y]);
 
                 Debug.Log($"Updated cell [{x}, {y}] with {selectedObject.name}");
             }
-;
+
+            ;
         }
 
         if (value != null)
         {
-            EditorGUI.DrawPreviewTexture(rect.Padding(1), levelData.EditorSettings.EditorBlockSprites[value.BlockColor].texture);
+            EditorGUI.DrawPreviewTexture(rect.Padding(1),
+                levelData.EditorSettings.EditorBlockSprites[value.BlockColor].texture);
         }
         else
         {
