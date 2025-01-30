@@ -119,17 +119,23 @@ public class Board : MonoBehaviour
             }
         }
 
+        HandleDeadlock();
+    }
+
+    private void HandleDeadlock()
+    {
+        Random random = new Random();
         var floodCounts = Helpers.GenerateRandomDivisors(random.Next(2, Math.Max(_rowsLength, _columnsLength)));
         var randomTiles = Helpers.SelectRandomElements(_rowsLength, _columnsLength, floodCounts.Count);
 
         InitializeFloodFill(ref _placedCells);
-        
+
         for (int i = 0; i < floodCounts.Count; i++)
         {
             FloodFillWithAmount(BoardData[randomTiles[i].x, randomTiles[i].y], floodCounts[i]);
         }
     }
-    
+
     private void FloodFillWithAmount(Tile startTile, int count)
     {
         var floodCount = count;
@@ -383,6 +389,11 @@ public class Board : MonoBehaviour
             }
         }
 
+        if (!IsBoardPlayable())
+        {
+            HandleDeadlock();
+        }
+        
         CheckBlockGroups(Enumerable.Range(0, _columnsLength).ToList());
         await CreateBoardBackground(cellSize);
     }
