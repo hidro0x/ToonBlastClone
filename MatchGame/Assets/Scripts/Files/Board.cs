@@ -29,6 +29,7 @@ public class Board : MonoBehaviour
     public Tile[,] BoardData { get; private set; }
     private Camera _camera;
     public ObjectPool<Block> BlockPool { get; private set; }
+    public ObjectPool<Tile> TilePool { get; private set; }
 
     private readonly Stack<int> _tempStack = new();
     private readonly List<Tile> _matchedTiles = new();
@@ -37,10 +38,11 @@ public class Board : MonoBehaviour
 
     #region MonoBehaviour
 
-    void Start()
+    async void Start()
     {
         _camera = Camera.main;
-        CreateBoard();
+        
+        await CreateBoard();
     }
 
     private void OnEnable()
@@ -116,6 +118,12 @@ public class Board : MonoBehaviour
         }
     }
 
+    
+
+    #endregion
+
+    #region Checks
+    
     private bool IsBoardPlayable()
     {
         foreach (var tile in BoardData)
@@ -157,10 +165,6 @@ public class Board : MonoBehaviour
 
         return false;
     }
-
-    #endregion
-
-    #region Checks
 
     private void CheckTile(Tile tile)
     {
@@ -221,21 +225,55 @@ public class Board : MonoBehaviour
 
     private void OrderColumn(int columnNum)
     {
-        for (int row = _rowsLength - 1; row >= 0; row--) // Sütunun en altından başlayarak yukarı çık
+        for (int row = _rowsLength - 1; row >= 0; row--)
         {
             Tile currentTile = BoardData[row, columnNum];
-            if (currentTile.IsTileFilled) continue; // Eğer boş bir kutu bulduysak
+            if (currentTile.IsTileFilled) continue;
 
-            for (int upperRow = row - 1; upperRow >= 0; upperRow--) // Daha üst sıralardan dolu bir kutu ara
+            for (int upperRow = row - 1; upperRow >= 0; upperRow--)
             {
                 Tile upperTile = BoardData[upperRow, columnNum];
 
-                if (!upperTile.IsTileFilled) continue; // Eğer dolu bir kutu bulursak
+                if (!upperTile.IsTileFilled) continue;
                 BlockManager.Instance.MoveBlock(upperTile, currentTile);
                 break;
             }
         }
     }
+    
+    private async UniTask InitializePoolsAsync(int amount, Vector3 cellSize)
+    {
+        if (BlockPool == null)
+        {
+            var tempBlockSpriteObject = new GameObject().AddComponent<Block>();
+            tempBlockSpriteObject.gameObject.AddComponent<SpriteRenderer>();
+            tempBlockSpriteObject.transform.localScale = cellSize;
+            BlockPool = new ObjectPool<Block>(tempBlockSpriteObject, _rowsLength * _columnsLength, transform);
+            tempBlockSpriteObject.gameObject.SetActive(false);
+        }
+
+        if (TilePool == null)
+        {
+            var tempTileObject = new GameObject().AddComponent<Tile>();
+            tempTileObject.gameObject.AddComponent<BoxCollider2D>();
+            tempTileObject.transform.localScale = cellSize;
+            TilePool = new ObjectPool<Tile>(tempTileObject, _rowsLength * _columnsLength, transform);
+            tempTileObject.gameObject.SetActive(false);
+        }
+        
+        await BlockPool.EnsurePoolSizeAsync(amount);
+        await TilePool.EnsurePoolSizeAsync(amount);
+        
+        var blockObjects = BlockPool.GetAllObjectsTransforms();
+        var tileObjects = TilePool.GetAllObjectsTransforms();
+        
+        await UniTask.WhenAll(
+            SetScaleAsync(blockObjects, cellSize), 
+            SetScaleAsync(tileObjects, cellSize) 
+        );
+    }
+    
+    
 
     private void FillColumns(List<int> columns)
     {
@@ -251,8 +289,9 @@ public class Board : MonoBehaviour
         StartShuffle();
     }
 
-    void CreateBoard()
+    private async UniTask CreateBoard()
     {
+
         if (level == null)
         {
             _rowsLength = 10;
@@ -265,9 +304,7 @@ public class Board : MonoBehaviour
         }
 
 
-        var tempTileObject = new GameObject().AddComponent<Tile>();
-        var collider = tempTileObject.gameObject.AddComponent<BoxCollider2D>();
-        BlockManager.Instance.SetBlockSize(collider.bounds.size.y);
+        
         BoardData = new Tile[_rowsLength, _columnsLength];
 
         float height = 2f * _camera.orthographicSize;
@@ -280,61 +317,57 @@ public class Board : MonoBehaviour
         float cellSize = Mathf.Min(maxCellWidth, maxCellHeight);
 
         Vector3 cellScale = new Vector3(cellSize * 1.17f, cellSize * 1.17f, 1);
-        tempTileObject.transform.localScale = cellScale;
 
-        var tempBlockSpriteObject = new GameObject().AddComponent<Block>();
-        var spriteRenderer = tempBlockSpriteObject.gameObject.AddComponent<SpriteRenderer>();
-        tempBlockSpriteObject.transform.localScale = cellScale;
-
-        BlockPool = new ObjectPool<Block>(tempBlockSpriteObject, _rowsLength * _columnsLength, transform);
+        await InitializePoolsAsync(_rowsLength * _columnsLength, cellScale);
+        BlockManager.Instance.SetBlockSize(0.5f);
+        
 
         Vector3 startPosition = new Vector3(-((_columnsLength - 1) * (cellSize + _fixedSpacing)) / 2,
             ((_rowsLength - 1) * (cellSize + _fixedSpacing)) / 2, 0);
-
-        int index = 0;
+        
         for (int i = 0; i < _rowsLength; i++)
         {
             for (int j = 0; j < _columnsLength; j++)
             {
                 Vector3 position = startPosition + new Vector3(j * (cellSize + _fixedSpacing),
                     -i * (cellSize + _fixedSpacing), 0);
-                BoardData[i, j] = Instantiate(tempTileObject, position, Quaternion.identity, transform);
+                
+                BoardData[i, j] = TilePool.Get();
+                BoardData[i, j].transform.localPosition = position;
+                
                 BoardData[i, j].Init(i, j,
                     level == null
                         ? BlockManager.Instance.GetRandomBlock()
                         : BlockManager.Instance.GetBlock(level.Board[j, i].BlockColor));
-                index++;
+                await UniTask.Yield();
             }
         }
 
-        CreateBoardBackground(startPosition, cellSize);
-
         CheckBlockGroups(Enumerable.Range(0, _columnsLength).ToList());
-
-        Destroy(tempTileObject);
-        Destroy(tempBlockSpriteObject);
-        
+        await CreateBoardBackground(startPosition, cellSize);
     }
 
-    private void CreateBoardBackground(Vector3 startPosition, float cellSize)
+    private async UniTask CreateBoardBackground(Vector3 startPosition, float cellSize)
     {
         if (boardBackground == null) return;
 
         float totalWidth = (_columnsLength * cellSize) + ((_columnsLength - 1) * _fixedSpacing);
         float totalHeight = (_rowsLength * cellSize) + ((_rowsLength - 1) * _fixedSpacing);
-        
+
         GameObject backgroundObject = new GameObject("BoardBackground");
         backgroundObject.transform.SetParent(transform);
 
         SpriteRenderer renderer = backgroundObject.AddComponent<SpriteRenderer>();
         renderer.sprite = boardBackground;
-        renderer.sortingOrder = -99; 
+        renderer.sortingOrder = -99;
 
-        backgroundObject.transform.localScale = new Vector3((totalWidth / renderer.sprite.bounds.size.x) + 0.05f,
-            (totalHeight / renderer.sprite.bounds.size.y) + 0.05f, 1);
+        backgroundObject.transform.localScale = new Vector3(
+            (totalWidth / renderer.sprite.bounds.size.x) + 0.05f,
+            (totalHeight / renderer.sprite.bounds.size.y) + 0.05f, 
+            1);
 
-        backgroundObject.transform.position = startPosition + new Vector3(totalWidth / 2 - cellSize / 2,
-            -totalHeight / 2 + cellSize / 2, 0);
+        backgroundObject.transform.localPosition = Vector3.zero;
+        await SetVisibilityBoardElements(true);
     }
 
     public List<Tile> FloodFill(Tile startTile)
@@ -450,6 +483,15 @@ public class Board : MonoBehaviour
     private Sequence SetVisibilityBoardElements(bool visibility)
     {
         return Sequence.Create().Group(SetVisibilityShuffleButton(visibility)).Group(SetVisibilityBoard(visibility));
+    }
+    
+    private async UniTask SetScaleAsync(IEnumerable<Transform> objects, Vector3 cellSize)
+    {
+        foreach (var obj in objects)
+        {
+            obj.localScale = cellSize;
+            await UniTask.Yield();
+        }
     }
 
     #endregion
