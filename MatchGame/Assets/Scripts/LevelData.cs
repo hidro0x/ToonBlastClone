@@ -9,11 +9,11 @@ using Random = UnityEngine.Random;
 [Serializable]
 public class LevelData : SerializedScriptableObject
 {
-    public int Row { get; private set; }
-    public int Column{ get; private set; }
+    [field:HideInInspector][field:SerializeField]public int Row { get; private set; }
+    [field:HideInInspector][field:SerializeField]public int Column{ get; private set; }
 
-    public EditorSettings EditorSettings { get; private set; }
-    public GameSettings GameSettings { get; private set; }
+    [field:HideInInspector][field:SerializeField]public EditorSettings EditorSettings { get; private set; }
+    [field:HideInInspector][field:SerializeField]public GameSettings GameSettings { get; private set; }
 
     [TableMatrix(HorizontalTitle = "Board", DrawElementMethod = "DrawElement", ResizableColumns = false,
         RowHeight = 75)]
@@ -43,7 +43,11 @@ public class LevelData : SerializedScriptableObject
                 }
             }
         }
+        
         EditorUtility.SetDirty(this);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        
     }
 
     public static EditorSettings LoadEditorSettingsFromFolder()
