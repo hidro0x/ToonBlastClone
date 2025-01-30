@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using PrimeTween;
 using UnityEngine;
 using Random = System.Random;
@@ -84,7 +85,7 @@ public class Board : MonoBehaviour
     }
 
     
-    private async Task ShuffleBoardAsync()
+    private async UniTask ShuffleBoardAsync()
     {
         Random random = new Random();
 
@@ -110,7 +111,7 @@ public class Board : MonoBehaviour
             {
                 BoardData[i, j].MarkAsEmpty();
                 BoardData[i, j].AssignBlock(tempBlocksList[index++], true);
-                await Task.Yield();
+                await UniTask.Yield();
             }
         }
     }
@@ -312,8 +313,7 @@ public class Board : MonoBehaviour
 
         Destroy(tempTileObject);
         Destroy(tempBlockSpriteObject);
-
-        SetVisibilityShuffleButton(true);
+        
     }
 
     private void CreateBoardBackground(Vector3 startPosition, float cellSize)

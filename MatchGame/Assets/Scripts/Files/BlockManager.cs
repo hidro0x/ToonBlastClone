@@ -46,12 +46,6 @@ public class BlockManager : SerializedMonoBehaviour
         if (block != null)
         {
             _board.BlockPool.Return(block);
-            // var localScale = block.transform.localScale;
-            // block.PlayAnimation(Tween.Scale(block.transform, 0 ,0.1f, Ease.InQuint).OnComplete(delegate
-            // {
-            //     _board.BlockPool.Return(block);
-            //     block.transform.localScale = localScale;
-            // }));
         }
     }
     
@@ -72,7 +66,6 @@ public class BlockManager : SerializedMonoBehaviour
         if (targetTile.IsTileFilled) return;
         targetTile.AssignBlock(movingBlock, false);
 
-        //movingBlock.PlayAnimation(Tween.LocalPositionAtSpeed(movingBlock.transform, targetTile.transform.localPosition, Settings.BlockSpawnFallTime, Easing.Bounce(Settings.BlockBounceStrength)));
         movingBlock.PlayAnimation(Tween.LocalPositionAtSpeed(movingBlock.transform, targetTile.transform.localPosition, Settings.BlockSpawnFallSpeed, Settings.BlockBounceStrengthCurve));
     }
 
