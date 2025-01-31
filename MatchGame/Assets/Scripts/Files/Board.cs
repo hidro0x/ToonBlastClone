@@ -413,8 +413,8 @@ public class Board : MonoBehaviour
         renderer.sortingOrder = -99;
 
         backgroundObject.transform.localScale = new Vector3(
-            (totalWidth / renderer.sprite.bounds.size.x) + 0.1f,
-            (totalHeight / renderer.sprite.bounds.size.y) + 0.1f, 
+            (totalWidth / renderer.sprite.bounds.size.x) + 0.07f,
+            (totalHeight / renderer.sprite.bounds.size.y) + 0.07f, 
             1);
 
         backgroundObject.transform.localPosition = Vector3.zero;
