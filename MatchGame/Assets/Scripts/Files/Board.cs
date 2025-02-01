@@ -31,10 +31,8 @@ public class Board : MonoBehaviour
     private Camera _camera;
     public ObjectPool<Block> BlockPool { get; private set; }
     public ObjectPool<Tile> TilePool { get; private set; }
-
-    private readonly Stack<int> _tempStack = new();
+    
     private readonly List<Tile> _matchedTiles = new();
-    private bool[] _visitedCells;
     private bool[] _placedCells;
     private bool _canShuffle = true;
 
@@ -82,7 +80,7 @@ public class Board : MonoBehaviour
 
         await SetVisibilityBoardElements(true);
 
-        CheckBlockGroups(Enumerable.Range(0, _columnsLength).ToList());
+        CheckBlockGroups();
 
         InputHandler.OnControlInput?.Invoke(true);
         _canShuffle = true;
@@ -127,41 +125,42 @@ public class Board : MonoBehaviour
         Random random = new Random();
         var floodCounts = Helpers.GenerateRandomDivisors(random.Next(2, Math.Max(_rowsLength, _columnsLength)));
         var randomTiles = Helpers.SelectRandomElements(_rowsLength, _columnsLength, floodCounts.Count);
-
-        InitializeFloodFill(ref _placedCells);
+        
 
         for (int i = 0; i < floodCounts.Count; i++)
         {
-            FloodFillWithAmount(BoardData[randomTiles[i].x, randomTiles[i].y], floodCounts[i]);
+            FillTilesWithAmount(BoardData[randomTiles[i].x, randomTiles[i].y], floodCounts[i]);
         }
     }
 
-    private void FloodFillWithAmount(Tile startTile, int count)
+    private void FillTilesWithAmount(Tile startTile, int count)
     {
-        var floodCount = count;
-        var placedTiles = new bool[_rowsLength * _columnsLength];
+        var visitedTiles = new bool[_rowsLength * _columnsLength];
+        Stack<int> tempStack = new();
         
+        var floodCount = count;
+
         int startRow = startTile.Row;
         int startColumn = startTile.Column;
         
-        _tempStack.Push(GetIndex(startRow, startColumn, _columnsLength));
+        tempStack.Push(GetIndex(startRow, startColumn, _columnsLength));
         while (floodCount > 0)
         {
-            int index = _tempStack.Pop();
+            int index = tempStack.Pop();
             int row = index / _columnsLength;
             int column = index % _columnsLength;
 
-            if (IsOutOfBounds(row, column) || placedTiles[index])
+            if (IsOutOfBounds(row, column) || visitedTiles[index])
                 continue;
 
             Tile currentTile = BoardData[row, column];
             if (!currentTile.IsTileFilled) continue;
             currentTile.Block.ChangeBlock(startTile.Block.Data);
             floodCount--;
-            placedTiles[index] = true;
+            visitedTiles[index] = true;
             _matchedTiles.Add(currentTile);
 
-            AddTilesToStack(row, column);
+            AddTilesToStack(row, column, tempStack);
         }
         
     }
@@ -218,7 +217,7 @@ public class Board : MonoBehaviour
     {
         if (tile.Block != null)
         {
-            var matchedTiles = FloodFill(tile);
+            var matchedTiles = GetTilesSameColor(tile);
             if (matchedTiles.Count < 2)
             {
                 BlockManager.Instance.ShakeBlock(tile.Block);
@@ -246,19 +245,14 @@ public class Board : MonoBehaviour
         FillColumns(fillingColumns);
     }
 
-    private void CheckBlockGroups(List<int> columns)
+    private void CheckBlockGroups()
     {
-        //Ekstra sağ ve sol sütunu kontrol etmek için.
-        columns.Add(columns[^1] + 1);
-        columns.Add(columns[0] - 1);
-
-
-        foreach (var column in columns)
+        for (int j = 0; j < _columnsLength; j++)
         {
             for (int i = 0; i < _rowsLength; i++)
             {
-                if (IsOutOfBounds(i, column)) continue;
-                var matchedTiles = FloodFill(BoardData[i, column]);
+                if (IsOutOfBounds(i, j)) continue;
+                var matchedTiles = GetTilesSameColor(BoardData[i, j]);
                 foreach (var tile in matchedTiles)
                 {
                     BlockManager.Instance.SetBlockType(tile.Block, matchedTiles.Count);
@@ -331,7 +325,7 @@ public class Board : MonoBehaviour
             BlockManager.Instance.SpawnBlock(column);
         }
 
-        CheckBlockGroups(columns);
+        CheckBlockGroups();
 
         if (IsBoardPlayable()) return;
         StartShuffle();
@@ -394,7 +388,7 @@ public class Board : MonoBehaviour
             HandleDeadlock();
         }
         
-        CheckBlockGroups(Enumerable.Range(0, _columnsLength).ToList());
+        CheckBlockGroups();
         await CreateBoardBackground(cellSize);
     }
 
@@ -421,50 +415,41 @@ public class Board : MonoBehaviour
         await SetVisibilityBoardElements(true);
     }
 
-    public List<Tile> FloodFill(Tile startTile)
+    private List<Tile> GetTilesSameColor(Tile startTile)
     {
-        InitializeFloodFill(ref _visitedCells);
-
+        var visitedCells = new bool[_rowsLength * _columnsLength];
+        Stack<int> tempStack = new();
+        
         int startRow = startTile.Row;
         int startColumn = startTile.Column;
         BlockColor targetColor = startTile.Block.Data.BlockColor;
 
-        _tempStack.Push(GetIndex(startRow, startColumn, _columnsLength));
+        tempStack.Push(GetIndex(startRow, startColumn, _columnsLength));
 
         _matchedTiles.Clear();
 
-        while (_tempStack.Count > 0)
+        while (tempStack.Count > 0)
         {
-            int index = _tempStack.Pop();
+            int index = tempStack.Pop();
             int row = index / _columnsLength;
             int column = index % _columnsLength;
 
-            if (IsOutOfBounds(row, column) || _visitedCells[index])
+            if (IsOutOfBounds(row, column) || visitedCells[index])
                 continue;
 
             Tile currentTile = BoardData[row, column];
             if (!currentTile.IsTileFilled || currentTile.Block.Data.BlockColor != targetColor) continue;
 
-            _visitedCells[index] = true;
+            visitedCells[index] = true;
             _matchedTiles.Add(currentTile);
 
-            AddTilesToStack(row, column);
+            AddTilesToStack(row, column, tempStack);
         }
 
         return _matchedTiles;
     }
     
-    private void InitializeFloodFill(ref bool[] cells)
-    {
-        int totalCells = _rowsLength * _columnsLength;
-
-        if (cells == null || cells.Length < totalCells)
-            cells = new bool[totalCells];
-        else
-            Array.Clear(cells, 0, totalCells);
-    }
-
-    private void AddTilesToStack(int row, int column)
+    private void AddTilesToStack(int row, int column, Stack<int> stack)
     {
         var directions = new (int rowOffset, int colOffset)[]
         {
@@ -481,7 +466,7 @@ public class Board : MonoBehaviour
 
             if (!IsOutOfBounds(newRow, newColumn))
             {
-                _tempStack.Push(GetIndex(newRow, newColumn, _columnsLength));
+                stack.Push(GetIndex(newRow, newColumn, _columnsLength));
             }
         }
     }
