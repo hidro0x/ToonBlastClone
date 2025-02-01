@@ -35,7 +35,6 @@ public class BlockManager : SerializedMonoBehaviour
 
         for (int i = spawnAmount - 1; i >= 0; i--)
         {
-            
             MoveBlock(spawnedBlocks[0], _board.BoardData[i, columnNum]);
             spawnedBlocks.RemoveAt(0);
         }
