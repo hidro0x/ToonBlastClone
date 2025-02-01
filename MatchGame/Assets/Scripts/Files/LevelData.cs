@@ -29,6 +29,7 @@ public class LevelData : SerializedScriptableObject
         RowHeight = 75)]
     public BlockData[,] Board = new BlockData[0, 0];
 
+#if UNITY_EDITOR
     [Button(ButtonSizes.Medium, ButtonStyle.Box, Expanded = true)]
     private void CreateLevel(int row, int column, bool randomness)
     {
@@ -88,6 +89,7 @@ public class LevelData : SerializedScriptableObject
         Debug.LogWarning("Editor ayarı bulunamadı: " + folderPath);
         return null;
     }
+#endif
 
 
 #if UNITY_EDITOR
