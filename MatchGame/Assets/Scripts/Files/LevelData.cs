@@ -26,7 +26,7 @@ public class LevelData : SerializedScriptableObject
     public GameSettings GameSettings { get; private set; }
 
     [TableMatrix(HorizontalTitle = "Board", DrawElementMethod = "DrawElement", ResizableColumns = false,
-        RowHeight = 75)]
+        RowHeight = 75, Transpose = true)]
     public BlockData[,] Board = new BlockData[0, 0];
 
 #if UNITY_EDITOR
@@ -101,7 +101,7 @@ public class LevelData : SerializedScriptableObject
         if (objectPickerID == 0) objectPickerID = GUIUtility.GetControlID(FocusType.Passive);
         if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
         {
-            selectedCell = new Vector2Int(x, y);
+            selectedCell = new Vector2Int(y, x);
             EditorGUIUtility.ShowObjectPicker<BlockData>(null, false, "", objectPickerID);
             Event.current.Use();
         }
@@ -111,10 +111,10 @@ public class LevelData : SerializedScriptableObject
         {
             BlockData selectedObject = EditorGUIUtility.GetObjectPickerObject() as BlockData;
 
-            if (selectedObject != null && selectedCell == new Vector2Int(x, y))
+            if (selectedObject != null && selectedCell == new Vector2Int(y, x))
             {
-                array[x, y] = selectedObject;
-                EditorUtility.SetDirty(array[x, y]);
+                array[y, x] = selectedObject;
+                EditorUtility.SetDirty(array[y, x]);
 
                 Debug.Log($"Updated cell [{x}, {y}] with {selectedObject.name}");
             }
@@ -132,7 +132,7 @@ public class LevelData : SerializedScriptableObject
             EditorGUI.DrawPreviewTexture(rect.Padding(1), Texture2D.normalTexture);
         }
 
-        return array[x, y];
+        return array[y, x];
     }
 #endif
 }

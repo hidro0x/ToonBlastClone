@@ -1,11 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
-using PrimeTween;
 using UnityEngine;
-using Random = System.Random;
+using Random = UnityEngine.Random;
 
 public class Board : MonoBehaviour
 {
@@ -47,7 +44,7 @@ public class Board : MonoBehaviour
         BoardUI = GetComponent<BoardUI>();
         BoardPool = new BoardPool();
         
-        await CreateBoard();
+        await CreateBoard(level);
     }
     
     private void OnDisable()
@@ -88,7 +85,7 @@ public class Board : MonoBehaviour
     
     private void ShuffleBoard()
     {
-        Random random = new Random();
+        System.Random random = new System.Random();
 
         List<Block> tempBlocksList = new List<Block>();
         for (int i = 0; i < _rowsLength; i++)
@@ -121,8 +118,7 @@ public class Board : MonoBehaviour
 
     private void HandleDeadlock()
     {
-        Random random = new Random();
-        var floodCounts = Helpers.GenerateRandomDivisors(random.Next(2, Math.Max(_rowsLength, _columnsLength)));
+        var floodCounts = Helpers.GenerateRandomDivisors((int)Random.Range(2, maxInclusive: Math.Max(_rowsLength, _columnsLength)));
         var randomTiles = Helpers.SelectRandomElements(_rowsLength, _columnsLength, floodCounts.Count);
         
 
@@ -141,8 +137,9 @@ public class Board : MonoBehaviour
         int startColumn = startTile.Column;
         
         _tempStack.Push(GetIndex(startRow, startColumn, _columnsLength));
-        while (floodCount > 0)
+        while (_tempStack.Count > 0)
         {
+            if(floodCount == 0) return;
             int index = _tempStack.Pop();
             int row = index / _columnsLength;
             int column = index % _columnsLength;
@@ -337,7 +334,7 @@ public class Board : MonoBehaviour
                 BoardData[i, j].Init(i, j,
                     level == null
                         ? BlockManager.Instance.GetRandomBlock()
-                        : BlockManager.Instance.GetBlock(level.Board[j, i].BlockColor));
+                        : BlockManager.Instance.GetBlock(level.Board[i, j].BlockColor));
             }
         }
 
