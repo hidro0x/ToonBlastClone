@@ -6,7 +6,6 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Game Settings", menuName = "Settings/New Game Settings", order = 1)]
 public class GameSettings : SerializedScriptableObject
 {
-    [Header("Game Rules")]
     [field: SerializeField]
     public Vector2Int DefaultIconBlockRange { get; private set; }
 
