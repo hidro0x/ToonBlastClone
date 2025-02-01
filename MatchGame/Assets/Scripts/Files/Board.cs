@@ -81,8 +81,6 @@ public class Board : MonoBehaviour
 
         await BoardUI.SetVisibilityBoardElements(true);
 
-        CheckBlockGroups();
-
         InputHandler.OnControlInput?.Invoke(true);
         _canShuffle = true;
     }
@@ -118,6 +116,7 @@ public class Board : MonoBehaviour
         }
 
         HandleDeadlock();
+        CheckBlockGroups();
     }
 
     private void HandleDeadlock()
