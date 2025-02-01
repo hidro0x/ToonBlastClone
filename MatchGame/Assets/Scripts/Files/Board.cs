@@ -24,14 +24,13 @@ public class Board : MonoBehaviour
     [Tooltip("The margin of the table to be formed from the right and left axis")] [SerializeField]
     float margin = 0.1f;
 
-    [Header("Assets")] [SerializeField] private RectTransform shuffleButton;
-    [SerializeField] private Sprite boardBackground;
-
     public Tile[,] BoardData { get; private set; }
     private Camera _camera;
-    public ObjectPool<Block> BlockPool { get; private set; }
-    public ObjectPool<Tile> TilePool { get; private set; }
     
+    public BoardUI BoardUI { get; private set; }
+    public BoardPool BoardPool{ get; private set; }
+
+
     private readonly List<Tile> _matchedTiles = new();
     private readonly Stack<int> _tempStack = new();
     private bool[] _visitedCells;
@@ -42,16 +41,15 @@ public class Board : MonoBehaviour
 
     async void Start()
     {
+        InputHandler.OnTileClicked += CheckTile;
         _camera = Camera.main;
+
+        BoardUI = GetComponent<BoardUI>();
+        BoardPool = new BoardPool();
         
         await CreateBoard();
     }
-
-    private void OnEnable()
-    {
-        InputHandler.OnTileClicked += CheckTile;
-    }
-
+    
     private void OnDisable()
     {
         InputHandler.OnTileClicked -= CheckTile;
@@ -77,11 +75,11 @@ public class Board : MonoBehaviour
         InputHandler.OnControlInput?.Invoke(false);
         _canShuffle = false;
 
-        await SetVisibilityBoardElements(false);
+        await BoardUI.SetVisibilityBoardElements(false);
 
         ShuffleBoard();
 
-        await SetVisibilityBoardElements(true);
+        await BoardUI.SetVisibilityBoardElements(true);
 
         CheckBlockGroups();
 
@@ -284,40 +282,6 @@ public class Board : MonoBehaviour
         }
     }
     
-    private async UniTask InitializePoolsAsync(int amount, Vector3 cellSize)
-    {
-        if (BlockPool == null)
-        {
-            var tempBlockSpriteObject = new GameObject().AddComponent<Block>();
-            tempBlockSpriteObject.gameObject.AddComponent<SpriteRenderer>();
-            tempBlockSpriteObject.transform.localScale = cellSize;
-            BlockPool = new ObjectPool<Block>(tempBlockSpriteObject, _rowsLength * _columnsLength, transform);
-            tempBlockSpriteObject.gameObject.SetActive(false);
-        }
-
-        if (TilePool == null)
-        {
-            var tempTileObject = new GameObject().AddComponent<Tile>();
-            tempTileObject.gameObject.AddComponent<BoxCollider2D>();
-            tempTileObject.transform.localScale = cellSize;
-            TilePool = new ObjectPool<Tile>(tempTileObject, _rowsLength * _columnsLength, transform);
-            tempTileObject.gameObject.SetActive(false);
-        }
-        
-        await BlockPool.EnsurePoolSizeAsync(amount);
-        await TilePool.EnsurePoolSizeAsync(amount);
-        
-        var blockObjects = BlockPool.GetAllObjectsTransforms();
-        var tileObjects = TilePool.GetAllObjectsTransforms();
-        
-        await UniTask.WhenAll(
-            SetScaleAsync(blockObjects, cellSize), 
-            SetScaleAsync(tileObjects, cellSize) 
-        );
-    }
-    
-    
-
     private void FillColumns(List<int> columns)
     {
         foreach (var column in columns)
@@ -328,15 +292,17 @@ public class Board : MonoBehaviour
 
         CheckBlockGroups();
 
-        if (IsBoardPlayable()) return;
-        StartShuffle();
+        if (!IsBoardPlayable())
+        { 
+            StartShuffle();
+        }
+        
     }
 
     private async UniTask CreateBoard(LevelData data = null)
     {
         _rowsLength = data == null ? 10 : level.Row;
         _columnsLength = data == null ? 9 : level.Column;
-        
         
         BoardData = new Tile[_rowsLength, _columnsLength];
 
@@ -352,7 +318,7 @@ public class Board : MonoBehaviour
 
         Vector3 cellScale = new Vector3(cellSize * 1.15f, cellSize * 1.15f, 1);
 
-        await InitializePoolsAsync(_rowsLength * _columnsLength, cellScale);
+        await BoardPool.InitializePoolsAsync(this, cellScale);
         BlockManager.Instance.SetBlockSize(0.5f);
         
 
@@ -366,7 +332,7 @@ public class Board : MonoBehaviour
                 Vector3 position = startPosition + new Vector3(j * (cellSize + _fixedSpacing),
                     -i * (cellSize + _fixedSpacing), 0);
                 
-                BoardData[i, j] = TilePool.Get();
+                BoardData[i, j] = BoardPool.TilePool.Get();
                 BoardData[i, j].transform.localPosition = position;
                 
                 BoardData[i, j].Init(i, j,
@@ -382,31 +348,9 @@ public class Board : MonoBehaviour
         }
         
         CheckBlockGroups();
-        await CreateBoardBackground(cellSize);
+        await BoardUI.CreateBoardBackground(_rowsLength, _columnsLength, _fixedSpacing, cellSize);
     }
-
-    private async UniTask CreateBoardBackground(float cellSize)
-    {
-        if (boardBackground == null) return;
-
-        float totalWidth = (_columnsLength * cellSize) + ((_columnsLength - 1) * _fixedSpacing);
-        float totalHeight = (_rowsLength * cellSize) + ((_rowsLength - 1) * _fixedSpacing);
-
-        GameObject backgroundObject = new GameObject("BoardBackground");
-        backgroundObject.transform.SetParent(transform);
-
-        SpriteRenderer renderer = backgroundObject.AddComponent<SpriteRenderer>();
-        renderer.sprite = boardBackground;
-        renderer.sortingOrder = -99;
-
-        backgroundObject.transform.localScale = new Vector3(
-            (totalWidth / renderer.sprite.bounds.size.x) + 0.07f,
-            (totalHeight / renderer.sprite.bounds.size.y) + 0.07f, 
-            1);
-
-        backgroundObject.transform.localPosition = Vector3.zero;
-        await SetVisibilityBoardElements(true);
-    }
+    
 
     private List<Tile> GetTilesSameColor(Tile startTile)
     {
@@ -463,7 +407,6 @@ public class Board : MonoBehaviour
         }
     }
     
-    
     #endregion
 
     #region Helpers
@@ -502,36 +445,5 @@ public class Board : MonoBehaviour
     }
 
     #endregion
-
-    #region Visual
-
-    private Tween SetVisibilityShuffleButton(bool visibility)
-    {
-        return visibility
-            ? Helpers.MoveOnScreen(shuffleButton.gameObject, Vector2.up, 1f)
-            : Helpers.MoveOnScreen(shuffleButton.gameObject, Vector2.down, 1f);
-    }
-
-    private Tween SetVisibilityBoard(bool visibility)
-    {
-        return visibility
-            ? Helpers.MoveOnScreen(transform.gameObject, Vector2.zero, 1f)
-            : Helpers.MoveOnScreen(transform.gameObject, Vector2.right, 1f);
-    }
-
-    private Sequence SetVisibilityBoardElements(bool visibility)
-    {
-        return Sequence.Create().Group(SetVisibilityShuffleButton(visibility)).Group(SetVisibilityBoard(visibility));
-    }
     
-    private async UniTask SetScaleAsync(IEnumerable<Transform> objects, Vector3 cellSize)
-    {
-        foreach (var obj in objects)
-        {
-            obj.localScale = cellSize;
-            await UniTask.Yield();
-        }
-    }
-
-    #endregion
 }

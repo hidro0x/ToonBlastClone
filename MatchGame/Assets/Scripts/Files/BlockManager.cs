@@ -44,7 +44,7 @@ public class BlockManager : SerializedMonoBehaviour
     {
         if (block != null)
         {
-            _board.BlockPool.Return(block);
+            _board.BoardPool.BlockPool.Return(block);
         }
     }
     
@@ -74,14 +74,14 @@ public class BlockManager : SerializedMonoBehaviour
     
     public Block GetRandomBlock()
     {
-        var block = _board.BlockPool.Get();
+        var block = _board.BoardPool.BlockPool.Get();
         block.ChangeBlock(Settings.BlockSO[Random.Range(0,6)]);
         return block;
     }
     
     public Block GetBlock(BlockColor color, BlockType type = BlockType.Default)
     {
-        var block = _board.BlockPool.Get();
+        var block = _board.BoardPool.BlockPool.Get();
         block.ChangeBlock(Settings.BlockSO.First(x=>x.BlockColor == color), type);
         return block;
     }
