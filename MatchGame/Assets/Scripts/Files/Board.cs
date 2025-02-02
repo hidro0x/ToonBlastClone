@@ -6,7 +6,7 @@ using Random = UnityEngine.Random;
 
 public class Board : MonoBehaviour
 {
-    [Header("Board Settings")] [SerializeField]
+    [SerializeField]
     private LevelData level;
 
     private int _rowsLength;

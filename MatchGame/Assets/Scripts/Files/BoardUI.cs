@@ -7,20 +7,22 @@ using UnityEngine;
 
 public class BoardUI : MonoBehaviour
 {
-    [SerializeField] private RectTransform shuffleButton;
-    [SerializeField] private Sprite boardBackground;
-
-    private SpriteRenderer _boardRenderer;
-    
+    [Header("Board Settings")] 
     [Tooltip("The margin of the table to be formed from the right and left axis")] [SerializeField]
     float margin = 0.1f;
     
     [Tooltip("Margin between cells")] [SerializeField]
     float spacing = 0.1f;
 
+    [Space]
+    [Header("Board Assets")]
+    [SerializeField] private RectTransform shuffleButton;
+    [SerializeField] private Sprite boardBackground;
+    
     private float _fixedSpacing;
     private float _fixedMargin;
     private Camera _camera;
+    private SpriteRenderer _boardRenderer;
     private void Awake()
     {
         _camera = Camera.main;
@@ -30,14 +32,17 @@ public class BoardUI : MonoBehaviour
     {
         int row = board.BoardData.GetLength(0);
         int column = board.BoardData.GetLength(1);
+
+        int rowForSizing = row < 5 ? 5 : row;
+        int columnForSizing = column < 5 ? 5 : column;
         
         float height = 2f * _camera.orthographicSize;
         float width = height * _camera.aspect;
         _fixedSpacing = (_camera.aspect / -6.5f) * spacing;
         _fixedMargin = margin * (_camera.aspect / 6.5f);
 
-        float maxCellWidth = (width - 2 * _fixedMargin - (column - 1) * _fixedSpacing) / column;
-        float maxCellHeight = (height - 2 * _fixedMargin - (row - 1) * _fixedSpacing) / row;
+        float maxCellWidth = (width - 2 * _fixedMargin - (columnForSizing - 1) * _fixedSpacing) / columnForSizing;
+        float maxCellHeight = (height - 2 * _fixedMargin - (rowForSizing - 1) * _fixedSpacing) / rowForSizing;
 
         float cellSize = Mathf.Min(maxCellWidth, maxCellHeight);
 

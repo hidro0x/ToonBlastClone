@@ -595,8 +595,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   level: {fileID: 11400000, guid: 42a26f45967f2f244be4f84ac4a9c2ef, type: 2}
-  spacing: 0.1
-  margin: 3
 --- !u!4 &1453748643
 Transform:
   m_ObjectHideFlags: 0
@@ -658,6 +656,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c65b84cd31d04374abf9ff83b2a63af8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  margin: 5
+  spacing: 0
   shuffleButton: {fileID: 1525749325}
   boardBackground: {fileID: 21300000, guid: fda4728a9e6ea8d4fb69ae97287a9aed, type: 3}
 --- !u!1 &1525749324
