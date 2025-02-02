@@ -12,19 +12,9 @@ public class Board : MonoBehaviour
     private int _rowsLength;
     private int _columnsLength;
 
-    [Tooltip("Margin between cells")] [SerializeField]
-    float spacing = 0.1f;
-
-    private float _fixedSpacing;
-    private float _fixedMargin;
-
-    [Tooltip("The margin of the table to be formed from the right and left axis")] [SerializeField]
-    float margin = 0.1f;
-
     public Tile[,] BoardData { get; private set; }
-    private Camera _camera;
-    
-    public BoardUI BoardUI { get; private set; }
+
+    private BoardUI _boardUI;
     public BoardPool BoardPool{ get; private set; }
 
 
@@ -39,9 +29,8 @@ public class Board : MonoBehaviour
     async void Start()
     {
         InputHandler.OnTileClicked += CheckTile;
-        _camera = Camera.main;
 
-        BoardUI = GetComponent<BoardUI>();
+        _boardUI = GetComponent<BoardUI>();
         BoardPool = new BoardPool();
         
         await CreateBoard(level);
@@ -72,11 +61,11 @@ public class Board : MonoBehaviour
         InputHandler.OnControlInput?.Invoke(false);
         _canShuffle = false;
 
-        await BoardUI.SetVisibilityBoardElements(false);
+        await _boardUI.SetVisibilityBoardElements(false);
 
         ShuffleBoard();
 
-        await BoardUI.SetVisibilityBoardElements(true);
+        await _boardUI.SetVisibilityBoardElements(true);
 
         InputHandler.OnControlInput?.Invoke(true);
         _canShuffle = true;
@@ -212,7 +201,7 @@ public class Board : MonoBehaviour
     {
         if (tile.Block != null)
         {
-            var matchedTiles = GetTilesSameColor(tile);
+            var matchedTiles = GetMatchingTiles(tile);
             if (matchedTiles.Count < 2)
             {
                 BlockManager.Instance.ShakeBlock(tile.Block);
@@ -247,7 +236,7 @@ public class Board : MonoBehaviour
             for (var i = 0; i < _rowsLength; i++)
             {
                 if (IsOutOfBounds(i, j)) continue;
-                var matchedTiles = GetTilesSameColor(BoardData[i, j]);
+                var matchedTiles = GetMatchingTiles(BoardData[i, j]);
                 foreach (var tile in matchedTiles)
                 {
                     BlockManager.Instance.SetBlockType(tile.Block, matchedTiles.Count);
@@ -302,35 +291,12 @@ public class Board : MonoBehaviour
         
         BoardData = new Tile[_rowsLength, _columnsLength];
 
-        float height = 2f * _camera.orthographicSize;
-        float width = height * _camera.aspect;
-        _fixedSpacing = (_camera.aspect / -6.5f) * spacing;
-        _fixedMargin = margin * (_camera.aspect / 6.5f);
-
-        float maxCellWidth = (width - 2 * _fixedMargin - (_columnsLength - 1) * _fixedSpacing) / _columnsLength;
-        float maxCellHeight = (height - 2 * _fixedMargin - (_rowsLength - 1) * _fixedSpacing) / _rowsLength;
-
-        float cellSize = Mathf.Min(maxCellWidth, maxCellHeight);
-
-        Vector3 cellScale = new Vector3(cellSize * 1.15f, cellSize * 1.15f, 1);
-
-        await BoardPool.InitializePoolsAsync(this, cellScale);
-        BlockManager.Instance.SetBlockSize(0.5f);
-        
-
-        Vector3 startPosition = new Vector3(-((_columnsLength - 1) * (cellSize + _fixedSpacing)) / 2,
-            ((_rowsLength - 1) * (cellSize + _fixedSpacing)) / 2, 0);
+        await _boardUI.CreateBoard(this);
         
         for (int i = 0; i < _rowsLength; i++)
         {
             for (int j = 0; j < _columnsLength; j++)
             {
-                Vector3 position = startPosition + new Vector3(j * (cellSize + _fixedSpacing),
-                    -i * (cellSize + _fixedSpacing), 0);
-                
-                BoardData[i, j] = BoardPool.TilePool.Get();
-                BoardData[i, j].transform.localPosition = position;
-                
                 BoardData[i, j].Init(i, j,
                     level == null
                         ? BlockManager.Instance.GetRandomBlock()
@@ -344,11 +310,12 @@ public class Board : MonoBehaviour
         }
         
         CheckBlockGroups();
-        await BoardUI.CreateBoardBackground(_rowsLength, _columnsLength, _fixedSpacing, cellSize);
+        
+        await _boardUI.SetVisibilityBoardElements(true);
     }
     
 
-    private List<Tile> GetTilesSameColor(Tile startTile)
+    private List<Tile> GetMatchingTiles(Tile startTile)
     {
         SetFloodFillCache();
         
