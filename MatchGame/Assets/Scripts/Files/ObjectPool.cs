@@ -13,8 +13,7 @@ public class ObjectPool<T> where T : Component
     {
         _prefab = prefab;
         _parent = parent;
-
-        // Başlangıçta nesneleri oluşturuyoruz, bunlar senkron olacak
+        
         for (int i = 0; i < initialSize; i++)
         {
             CreateNewObject();
@@ -47,8 +46,7 @@ public class ObjectPool<T> where T : Component
         }
         return transforms;
     }
-
-    // EnsurePoolSize fonksiyonunu asenkron hale getiriyoruz
+    
     public async UniTask EnsurePoolSizeAsync(int targetSize)
     {
         while (_objectPool.Count < targetSize)
