@@ -4,7 +4,7 @@
 
 This is a case study project for Good Job Games. The game is a **2D puzzle game** with **collapse/explosion mechanics**, developed from scratch in **10 days** without using any templates. The project supports both **mobile (Android/iOS) and PC** platforms, ensuring a **smooth and responsive user experience**.
 
-📺 [Gameplay Video](https://www.youtube.com/watch?v=VIDEO_ID)
+📺 [Gameplay Video](https://www.youtube.com/watch?v=1lrz9vP1lGY)
 
 ## 📌 Features
 
@@ -22,7 +22,7 @@ This is a case study project for Good Job Games. The game is a **2D puzzle game*
   - Custom board dimensions.
   - Initial block placements and colors.
   - Special conditions (obstacles, power-ups, etc.).
-  - 
+
 ![7baiicz](https://github.com/user-attachments/assets/a2fadf19-49c6-4e7b-8afa-b9f39754de85)
 ![image](https://github.com/user-attachments/assets/0ff74944-cf85-43dc-9dc2-1c572cd507d0)
 
@@ -74,14 +74,13 @@ This is a case study project for Good Job Games. The game is a **2D puzzle game*
 - **Asynchronous Operations (UniTask)**: Ensures smooth animations and prevents lag.  
 - **Optimized Rendering**: Uses dynamic batching and efficient shaders.  
 - **Memory Management**: Avoids unnecessary GC events, optimizing RAM usage.
+  
 ![image](https://github.com/user-attachments/assets/ec9447c7-1746-41d5-b49e-382ee5d8884c)
-
 
 ## 🛠️ Technical Details
 
 - **Unity Version**: `2022.3f.13f1`  
 - **Third-Party Packages**: `Prime Tween`, `Odin`, `UniTask`  
-- **GitHub Repository**: [CaseStudyGJG](https://github.com/hidro0x/CaseStudyGJG)  
 
 ---
 
