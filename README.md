@@ -2,7 +2,7 @@
 
 **Developed by Yiğit Durmuş**  
 
-This is a case study project for Good Job Games. The game is a **2D puzzle game** with **collapse/explosion mechanics**, developed from scratch in **10 days** without using any templates. The project supports both **mobile (Android/iOS) and PC** platforms, ensuring a **smooth and responsive user experience**.
+The game is a **2D puzzle game** with **collapse/explosion mechanics**, developed from scratch in **10 days** without using any templates. The project supports both **mobile (Android/iOS) and PC** platforms, ensuring a **smooth and responsive user experience**.
 
 📺 [Gameplay Video](https://www.youtube.com/watch?v=1lrz9vP1lGY)
 
